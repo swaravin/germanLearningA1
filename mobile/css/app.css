@@ -1,0 +1,256 @@
+:root {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --primary: #1f4e79;
+  --muted: #5c6570;
+  --accent: #2e7d32;
+  --danger: #c62828;
+  --radius: 16px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: #1a1a1a;
+  overscroll-behavior: none;
+}
+
+body {
+  padding: calc(12px + var(--safe-top)) 12px calc(80px + var(--safe-bottom));
+}
+
+header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--primary);
+}
+
+header p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.toolbar select,
+.toolbar button {
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d0d7de;
+  background: var(--card);
+}
+
+.toolbar button.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.card-wrap {
+  perspective: 1200px;
+  margin: 8px auto 16px;
+  max-width: 420px;
+}
+
+.card {
+  position: relative;
+  min-height: 280px;
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  padding: 24px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.35s ease;
+  transform-style: preserve-3d;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  backface-visibility: hidden;
+}
+
+.card-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+.section-tag {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.german {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 12px 0 8px;
+  line-height: 1.2;
+}
+
+.german .article {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.english {
+  font-size: 1.6rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sentence {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.progress {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.actions button {
+  padding: 14px 8px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.actions button.speak {
+  background: #e8f0fe;
+  color: var(--primary);
+}
+
+.install-hint {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff8e1;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.install-hint.hidden {
+  display: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+nav.tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  background: var(--card);
+  border-top: 1px solid #e0e0e0;
+  padding-bottom: var(--safe-bottom);
+}
+
+nav.tabs button {
+  padding: 14px;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+nav.tabs button.active {
+  color: var(--primary);
+  box-shadow: inset 0 -3px 0 var(--primary);
+}
+
+#browse-view {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+#browse-view input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #d0d7de;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.word-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.word-list li {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.word-list .de {
+  font-weight: 700;
+}
+
+.word-list .en {
+  color: var(--muted);
+  font-size: 0.9rem;
+}

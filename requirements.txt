@@ -1,0 +1,6 @@
+streamlit>=1.32
+streamlit-javascript>=0.1.5
+requests>=2.31
+edge-tts>=6.1
+imageio-ffmpeg>=0.5
+python-docx>=1.1

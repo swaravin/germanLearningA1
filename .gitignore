@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.streamlit/secrets.toml
+.german_vocab_audio_tmp/
+assets/images/*.jpg
+assets/audio/*
+!assets/audio/.gitkeep
+assets/full/.course_cache/
+.DS_Store
+*.aiff
+*.m4a

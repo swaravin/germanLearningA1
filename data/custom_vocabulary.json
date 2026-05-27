@@ -1,0 +1,120 @@
+{
+  "words": [
+    {
+      "id": 451,
+      "section": "My cards",
+      "german": "Schiff",
+      "english": "Ship",
+      "pronunciation": "das Schiff",
+      "sentence_de": "Das ist das Schiff. Ich brauche das Schiff.",
+      "sentence_en": "This is Ship. I need Ship.",
+      "image_query": "Ship",
+      "has_image": true,
+      "article": "das"
+    },
+    {
+      "id": 452,
+      "section": "My cards",
+      "german": "Ort",
+      "english": "place",
+      "pronunciation": "der Ort",
+      "sentence_de": "Das ist der Ort. Ich brauche den Ort.",
+      "sentence_en": "This is place. I need place.",
+      "image_query": "place",
+      "has_image": true,
+      "article": "der"
+    },
+    {
+      "id": 453,
+      "section": "My cards",
+      "german": "weg",
+      "english": "away",
+      "pronunciation": "der weg",
+      "sentence_de": "Das ist der weg. Ich brauche den weg.",
+      "sentence_en": "This is away. I need away.",
+      "image_query": "away",
+      "has_image": true,
+      "article": "der"
+    },
+    {
+      "id": 454,
+      "section": "My cards",
+      "german": "Kirche",
+      "english": "Church",
+      "pronunciation": "die Kirche",
+      "sentence_de": "Das ist die Kirche. Ich brauche die Kirche.",
+      "sentence_en": "This is Church. I need Church.",
+      "image_query": "Church",
+      "has_image": true,
+      "article": "die"
+    },
+    {
+      "id": 455,
+      "section": "My cards",
+      "german": "Cafe",
+      "english": "cafe",
+      "pronunciation": "Cafe",
+      "sentence_de": "Das ist ein Cafe.",
+      "sentence_en": "This is cafe. I need cafe.",
+      "image_query": "cafe",
+      "has_image": true
+    },
+    {
+      "id": 456,
+      "section": "My cards",
+      "german": "passen",
+      "english": "fit",
+      "pronunciation": "passen",
+      "sentence_de": "„passen“ — auf Englisch: fit.",
+      "sentence_en": "\"passen\" — in English: fit.",
+      "image_query": "fit",
+      "has_image": true
+    },
+    {
+      "id": 457,
+      "section": "My cards",
+      "german": "Fahrrad",
+      "english": "Bicycle",
+      "pronunciation": "das Fahrrad",
+      "sentence_de": "Das ist das Fahrrad. Ich brauche das Fahrrad.",
+      "sentence_en": "This is Bicycle. I need Bicycle.",
+      "image_query": "Bicycle",
+      "has_image": true,
+      "article": "das"
+    },
+    {
+      "id": 458,
+      "section": "My cards",
+      "german": "suchen",
+      "english": "seek",
+      "pronunciation": "suchen",
+      "sentence_de": "„suchen“ — auf Englisch: seek.",
+      "sentence_en": "\"suchen\" — in English: seek.",
+      "image_query": "seek",
+      "has_image": true
+    },
+    {
+      "id": 459,
+      "section": "My cards",
+      "german": "Bildgeschichte",
+      "english": "Picture story",
+      "pronunciation": "Bildgeschichte",
+      "sentence_de": "Das ist Bildgeschichte. Ich brauche Bildgeschichte.",
+      "sentence_en": "This is Picture story. I need Picture story.",
+      "image_query": "Picture_story",
+      "has_image": true
+    },
+    {
+      "id": 460,
+      "section": "My cards",
+      "german": "Personen",
+      "english": "persons",
+      "pronunciation": "die Personen",
+      "sentence_de": "Das ist die Personen. Ich brauche die Personen.",
+      "sentence_en": "This is persons. I need persons.",
+      "image_query": "persons",
+      "has_image": true,
+      "article": "die"
+    }
+  ]
+}
