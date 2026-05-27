@@ -1,0 +1,45 @@
+# Deploy the offline iPhone flashcard PWA (mobile/) to GitHub Pages.
+# The Streamlit app (app.py) does NOT run on Pages — use Streamlit Cloud for that.
+
+name: Deploy mobile PWA to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+      - "data/**"
+      - "scripts/build_mobile_pwa.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync vocabulary into mobile/data
+        run: python scripts/build_mobile_pwa.py
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: mobile
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -59,7 +59,14 @@ On your iPhone (same Wi‑Fi as your Mac):
 1. Safari → `http://<your-mac-ip>:8080`
 2. **Share** → **Add to Home Screen**
 
-Or host the `mobile/` folder on **GitHub Pages** / Netlify and add that URL to your home screen.
+Or host the `mobile/` folder on **GitHub Pages** (recommended — always on, no Mac needed):
+
+1. Repo **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions** (not “Deploy from branch”).
+2. Push to `main` — the workflow `.github/workflows/pages.yml` builds and deploys automatically.
+3. Your app URL: **https://swaravin.github.io/germanLearningA1/**
+4. iPhone Safari → that URL → **Share → Add to Home Screen**
+
+Or use Netlify / Cloudflare Pages with the `mobile/` folder as the publish directory.
 
 ### Option B — Full app (add cards, MP3 tools)
 
