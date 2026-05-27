@@ -7,57 +7,69 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="DE A1" />
-    <meta name="theme-color" content="#1f4e79" />
+    <meta name="theme-color" content="#1a4d7a" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
     <title>German A1</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
     <link rel="stylesheet" href="css/app.css" />
   </head>
   <body>
-    <header>
-      <h1>🇩🇪 German A1</h1>
-      <p>Flashcards · works offline after first open</p>
-    </header>
+    <div class="shell">
+      <header>
+        <h1>🇩🇪 German A1</h1>
+        <p>Flashcards · works offline after first open</p>
+      </header>
 
-    <div id="install-hint" class="install-hint"></div>
+      <div id="install-hint" class="install-hint"></div>
 
-    <div id="flash-view">
-      <div class="toolbar">
-        <select id="section-filter" aria-label="Section"></select>
-        <select id="front-mode" aria-label="Front side">
-          <option value="german">German front</option>
-          <option value="english">English front</option>
-          <option value="both">German + English</option>
-        </select>
-      </div>
+      <div id="flash-view">
+        <div class="toolbar">
+          <select id="section-filter" aria-label="Section"></select>
+          <select id="front-mode" aria-label="Front side">
+            <option value="german">German front</option>
+            <option value="english">English front</option>
+            <option value="both">German + English</option>
+          </select>
+        </div>
 
-      <div class="progress" id="progress">Loading…</div>
+        <div class="progress-wrap">
+          <div class="progress-bar" aria-hidden="true">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <div class="progress-label" id="progress">Loading…</div>
+        </div>
 
-      <div class="card-wrap">
-        <div class="card" id="flashcard">
-          <div class="card-face card-front" id="card-front"></div>
-          <div class="card-face card-back" id="card-back"></div>
+        <div class="card-panel">
+          <div class="card-wrap">
+            <div class="card" id="flashcard">
+              <div class="card-face card-front" id="card-front"></div>
+              <div class="card-face card-back" id="card-back"></div>
+            </div>
+            <p class="card-hint">Tap card to flip</p>
+          </div>
+
+          <div id="card-sentence"></div>
+        </div>
+
+        <div class="actions actions-nav">
+          <button type="button" id="btn-prev" class="nav-btn">← Prev</button>
+          <button type="button" id="btn-next" class="nav-btn">Next →</button>
+        </div>
+        <div class="actions actions-tools" style="margin-top: 10px">
+          <button type="button" id="btn-speak-de" class="speak-de">🔊 DE</button>
+          <button type="button" id="btn-speak-en" class="speak-en">🔊 EN</button>
+          <button type="button" id="btn-shuffle" class="shuffle-btn">Shuffle</button>
         </div>
       </div>
 
-      <div id="card-sentence"></div>
-
-      <div class="actions">
-        <button type="button" id="btn-prev">← Prev</button>
-        <button type="button" id="btn-speak-de" class="speak">🔊 DE</button>
-        <button type="button" id="btn-next">Next →</button>
+      <div id="browse-view" class="hidden">
+        <input id="search" type="search" placeholder="Search German or English…" autocomplete="off" />
+        <ul class="word-list" id="word-list"></ul>
       </div>
-      <div class="actions" style="margin-top: 8px; grid-template-columns: 1fr 1fr">
-        <button type="button" id="btn-speak-en" class="speak">🔊 EN</button>
-        <button type="button" id="btn-shuffle">Shuffle</button>
-      </div>
-    </div>
-
-    <div id="browse-view" class="hidden">
-      <input id="search" type="search" placeholder="Search German or English…" autocomplete="off" />
-      <ul class="word-list" id="word-list"></ul>
     </div>
 
     <nav class="tabs">

@@ -109,8 +109,51 @@ st.markdown(
         box-shadow: 0 4px 14px rgba(15, 61, 46, 0.08);
         padding: 0.75rem 1rem 1.25rem !important;
     }
-    /* Prev / flip / next row on the card */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+    /* Prev / flip / next — see flash-card nav block at end of stylesheet */
+    div[data-testid="stSidebar"] { background: #f4f6f4; }
+
+    /* Default Streamlit buttons (light) */
+    .stApp div[data-testid="stButton"] > button[kind="secondary"],
+    .stApp div[data-testid="stButton"] > button:not([kind="primary"]) {
+        background: #ffffff !important;
+        color: #0f3d2e !important;
+        border: 1.5px solid #c5d5ce !important;
+        border-radius: 10px !important;
+    }
+    .stApp div[data-testid="stButton"] > button[kind="secondary"] p,
+    .stApp div[data-testid="stButton"] > button:not([kind="primary"]) p {
+        color: #0f3d2e !important;
+    }
+    .stApp div[data-testid="stButton"] > button[kind="secondary"]:hover,
+    .stApp div[data-testid="stButton"] > button:not([kind="primary"]):hover {
+        background: #f4f8f6 !important;
+        border-color: #0f3d2e !important;
+        color: #0f3d2e !important;
+    }
+    .stApp div[data-testid="stButton"] > button[kind="primary"] {
+        background: #0f3d2e !important;
+        color: #ffffff !important;
+        border: 1.5px solid #0f3d2e !important;
+        border-radius: 10px !important;
+    }
+    .stApp div[data-testid="stButton"] > button[kind="primary"] p {
+        color: #ffffff !important;
+    }
+    .stApp div[data-testid="stButton"] > button[kind="primary"]:hover {
+        background: #1a5c45 !important;
+        border-color: #1a5c45 !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stButton"] > button {
+        background: #ffffff !important;
+        color: #0f3d2e !important;
+        border: 1px solid #c5d5ce !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stButton"] > button p {
+        color: #0f3d2e !important;
+    }
+
+    /* Flashcard ◀ Prev / ↻ / Next ▶ — must come after generic button rules */
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
     div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button {
         min-height: 42px !important;
         border-radius: 10px !important;
@@ -119,13 +162,16 @@ st.markdown(
         color: #0f3d2e !important;
         box-shadow: 0 2px 6px rgba(15, 61, 46, 0.12) !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+    div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button p {
+        color: #0f3d2e !important;
+    }
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
     div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button:hover {
         background: #e8f0ec !important;
         border-color: #0f3d2e !important;
-        color: #0f3d2e !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
     div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
     div[data-testid="stButton"] > button {
         width: 48px !important;
@@ -136,13 +182,105 @@ st.markdown(
         padding: 0 !important;
         font-size: 1.35rem !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
     div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
     div[data-testid="stButton"] > button p {
         font-size: 1.35rem !important;
         line-height: 1 !important;
+        color: #0f3d2e !important;
     }
-    div[data-testid="stSidebar"] { background: #f4f6f4; }
+
+    /* System light / dark — follows iOS / macOS appearance */
+    html { color-scheme: light dark; }
+
+    @media (prefers-color-scheme: dark) {
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+            background-color: #0e1117 !important;
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stHeader"] { background: transparent !important; }
+        [data-testid="stSidebar"] {
+            background: #1a1f2e !important;
+            border-right: 1px solid #2d3748 !important;
+        }
+        [data-testid="stSidebar"] * { color: #e2e8f0; }
+        .flash-de { color: #a8e6cf !important; }
+        .flash-article { color: #7eb8e8 !important; }
+        .flash-en { color: #e2e8f0 !important; }
+        .flash-pron, .flash-card-caption, .flash-card-label { color: #94a3b8 !important; }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker) {
+            background: #1e293b !important;
+            border-color: #4ade80 !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="secondary"],
+        .stApp div[data-testid="stButton"] > button:not([kind="primary"]) {
+            background: #243044 !important;
+            color: #e2e8f0 !important;
+            border-color: #475569 !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="secondary"] p,
+        .stApp div[data-testid="stButton"] > button:not([kind="primary"]) p {
+            color: #e2e8f0 !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="secondary"]:hover,
+        .stApp div[data-testid="stButton"] > button:not([kind="primary"]):hover {
+            background: #2d3a4f !important;
+            border-color: #7eb8e8 !important;
+            color: #ffffff !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="primary"] {
+            background: #7eb8e8 !important;
+            color: #0b1220 !important;
+            border-color: #7eb8e8 !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="primary"] p {
+            color: #0b1220 !important;
+        }
+        .stApp div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background: #9ccbf0 !important;
+            border-color: #9ccbf0 !important;
+        }
+        [data-testid="stSidebar"] div[data-testid="stButton"] > button {
+            background: #243044 !important;
+            color: #e2e8f0 !important;
+            border-color: #475569 !important;
+        }
+        [data-testid="stSidebar"] div[data-testid="stButton"] > button p {
+            color: #e2e8f0 !important;
+        }
+        /* Flashcard nav — after generic dark buttons */
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button {
+            background: #1e3a5f !important;
+            border-color: #7eb8e8 !important;
+            color: #ffffff !important;
+        }
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button p {
+            color: #ffffff !important;
+        }
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button:hover {
+            background: #25466d !important;
+            border-color: #9ccbf0 !important;
+        }
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
+        div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
+        div[data-testid="stButton"] > button p {
+            color: #ffffff !important;
+        }
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
+        }
+        [data-testid="stCheckbox"] label span {
+            color: #e2e8f0 !important;
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,

@@ -52,24 +52,50 @@ def _speech_button_html(
     rate_js = json.dumps(rate)
 
     if variant == "primary":
-        style = """
-            width: 100%; padding: 0.55rem 0.75rem; cursor: pointer;
-            background: #f4f8f6; border: 1.5px solid #0f3d2e; border-radius: 0.5rem;
-            color: #0f3d2e; font-size: 0.95rem;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        """
+        btn_class = "a1-speech-btn a1-speech-primary"
     else:
-        style = """
-            width: 100%; padding: 0.55rem 0.75rem; cursor: pointer;
-            background: #fff; border: 1.5px solid #888; border-radius: 0.5rem;
-            color: #333; font-size: 0.85rem;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        """
+        btn_class = "a1-speech-btn a1-speech-secondary"
 
     components.html(
         f"""
-        <button id="{button_id}" type="button" style="{style}">{label_html}</button>
-        <p id="{button_id}_msg" style="font-size:0.75rem;color:#666;margin:0.35rem 0 0"></p>
+        <style>
+        .a1-speech-btn {{
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }}
+        .a1-speech-primary {{
+            background: #f4f8f6;
+            border: 1.5px solid #0f3d2e;
+            color: #0f3d2e;
+            font-size: 0.95rem;
+        }}
+        .a1-speech-secondary {{
+            background: #fff;
+            border: 1.5px solid #888;
+            color: #333;
+            font-size: 0.85rem;
+        }}
+        .a1-speech-msg {{ font-size: 0.75rem; color: #666; margin: 0.35rem 0 0; }}
+        @media (prefers-color-scheme: dark) {{
+            .a1-speech-primary {{
+                background: #1e3a5f;
+                border-color: #7eb8e8;
+                color: #e2e8f0;
+            }}
+            .a1-speech-secondary {{
+                background: #243044;
+                border-color: #475569;
+                color: #e2e8f0;
+            }}
+            .a1-speech-msg {{ color: #94a3b8; }}
+        }}
+        </style>
+        <button id="{button_id}" type="button" class="{btn_class}">{label_html}</button>
+        <p id="{button_id}_msg" class="a1-speech-msg"></p>
         <script>
         (function() {{
             const btn = document.getElementById({button_id_js});

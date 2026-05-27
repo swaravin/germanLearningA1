@@ -92,6 +92,7 @@ function renderCard() {
   const w = currentWord();
   if (!w) {
     document.getElementById("progress").textContent = "No words in this section.";
+    document.getElementById("progress-fill").style.width = "0%";
     card.classList.add("hidden");
     return;
   }
@@ -99,20 +100,25 @@ function renderCard() {
   card.classList.remove("flipped");
   state.flipped = false;
 
+  const pct = state.deck.length ? ((state.index + 1) / state.deck.length) * 100 : 0;
+  document.getElementById("progress-fill").style.width = `${pct}%`;
   document.getElementById("progress").textContent =
-    `${state.index + 1} / ${state.deck.length} · ${w.section || ""}`;
+    `Card ${state.index + 1} / ${state.deck.length} · ${w.section || ""}`;
 
   const frontEl = document.getElementById("card-front");
   const backEl = document.getElementById("card-back");
+  const sectionTag = w.section
+    ? `<div class="section-tag">${w.section.replace(/^\d+\.\s*/, "")}</div>`
+    : "";
 
   if (state.front === "english") {
-    frontEl.innerHTML = `<div class="english">${englishShort(w.english)}</div>`;
+    frontEl.innerHTML = `${sectionTag}<div class="english">${englishShort(w.english)}</div>`;
     backEl.innerHTML = `<div class="german">${germanDisplay(w)}</div>`;
   } else if (state.front === "both") {
-    frontEl.innerHTML = `<div class="german">${germanDisplay(w)}</div><div class="english">${englishShort(w.english)}</div>`;
+    frontEl.innerHTML = `${sectionTag}<div class="german">${germanDisplay(w)}</div><div class="english">${englishShort(w.english)}</div>`;
     backEl.innerHTML = `<div class="sentence">${w.sentence_de || ""}</div><div class="sentence">${w.sentence_en || ""}</div>`;
   } else {
-    frontEl.innerHTML = `<div class="german">${germanDisplay(w)}</div>`;
+    frontEl.innerHTML = `${sectionTag}<div class="german">${germanDisplay(w)}</div>`;
     backEl.innerHTML = `<div class="english">${englishShort(w.english)}</div>`;
   }
 
