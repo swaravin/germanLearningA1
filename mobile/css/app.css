@@ -26,7 +26,8 @@
   --btn-nav-border: #1a4d7a;
   --btn-tab-active: #1a4d7a;
   --radius: 20px;
-  --shell: 440px;
+  --shell: min(100%, 560px);
+  --page-pad: clamp(12px, 4vw, 20px);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -71,15 +72,18 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  min-height: 100dvh;
   font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
   background-attachment: fixed;
   color: var(--text);
   overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  padding: calc(16px + var(--safe-top)) 16px calc(88px + var(--safe-bottom));
+  padding: calc(var(--page-pad) + var(--safe-top)) var(--page-pad) calc(88px + var(--safe-bottom));
 }
 
 .shell {
@@ -95,7 +99,7 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 5vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--primary);
@@ -124,9 +128,28 @@ header p {
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.toolbar-level {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+.toolbar-level select {
+  font-weight: 600;
+}
+
+.level-picker-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
 }
 
 .toolbar select {
@@ -178,10 +201,13 @@ header p {
 
 .progress-label {
   text-align: center;
-  font-size: 0.82rem;
+  font-size: clamp(0.72rem, 3.2vw, 0.82rem);
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--muted);
+  line-height: 1.35;
+  word-break: break-word;
+  padding: 0 4px;
 }
 
 .card-panel {
@@ -194,16 +220,17 @@ header p {
 
 .card {
   position: relative;
-  min-height: 240px;
+  min-height: clamp(200px, 38dvh, 320px);
   border-radius: var(--radius);
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  padding: 28px 22px 22px;
+  padding: clamp(18px, 4vw, 28px) clamp(16px, 3.5vw, 22px) clamp(16px, 3vw, 22px);
   text-align: center;
   cursor: pointer;
   transition: transform 0.35s ease, box-shadow 0.2s ease;
   transform-style: preserve-3d;
+  overflow: hidden;
 }
 
 .card:active {
@@ -220,11 +247,13 @@ header p {
 
 .card-face {
   backface-visibility: hidden;
-  min-height: 180px;
+  min-height: clamp(140px, 28dvh, 200px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  padding: 0 4px;
 }
 
 .card-back {
@@ -257,11 +286,14 @@ header p {
 }
 
 .german {
-  font-size: clamp(1.75rem, 7vw, 2.25rem);
+  font-size: clamp(1.5rem, 6.5vw, 2.35rem);
   font-weight: 700;
   margin: 14px 0 6px;
   line-height: 1.15;
   letter-spacing: -0.02em;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .german .article {
@@ -270,10 +302,12 @@ header p {
 }
 
 .english {
-  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  font-size: clamp(1.15rem, 4.8vw, 1.75rem);
   color: var(--accent);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 #card-sentence {
@@ -317,15 +351,16 @@ header p {
 }
 
 .actions button {
-  padding: 14px 10px;
+  padding: clamp(12px, 3vw, 14px) 8px;
   border-radius: 14px;
   border: 1px solid var(--btn-border);
-  font-size: 0.92rem;
+  font-size: clamp(0.82rem, 3.2vw, 0.92rem);
   font-weight: 600;
   background: var(--btn-bg);
   color: var(--btn-fg);
   box-shadow: var(--btn-shadow);
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  min-height: 48px;
 }
 
 .actions button:active {
@@ -435,12 +470,63 @@ nav.tabs button.active {
   margin-top: 4px;
 }
 
+@media (max-width: 360px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions-tools .shuffle-btn {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (min-width: 520px) {
   body {
-    padding-top: calc(28px + var(--safe-top));
+    padding-top: calc(24px + var(--safe-top));
+  }
+
+  :root {
+    --shell: min(100%, 640px);
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --shell: min(100%, 720px);
+  }
+
+  body {
+    padding-left: calc(var(--page-pad) + 12px);
+    padding-right: calc(var(--page-pad) + 12px);
   }
 
   .card {
-    min-height: 260px;
+    min-height: clamp(240px, 32dvh, 360px);
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  header {
+    margin-bottom: 10px;
+  }
+
+  header p {
+    display: none;
+  }
+
+  .card {
+    min-height: 160px;
+  }
+
+  .card-face {
+    min-height: 100px;
+  }
+
+  body {
+    padding-bottom: calc(72px + var(--safe-bottom));
   }
 }

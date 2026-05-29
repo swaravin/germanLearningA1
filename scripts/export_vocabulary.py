@@ -9,18 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from a1.articles import article_for_german, german_with_article
-from a1.config import DATA_DIR, VOCAB_JSON
-from a1.image_lookup import IMAGE_LOOKUP
+from a1.config import DATA_DIR
+from a1.levels import ensure_level_layout, vocabulary_path
 from a1.images import image_queries_for
 from build_german_vocab_learn_pack import collect_entries
 
 
 def main() -> None:
+    ensure_level_layout()
     words = []
     for e in collect_entries():
-        queries = image_queries_for(e.german, e.english)
+        queries = image_queries_for(e.german, e.english, section=e.section)
         q = queries[0] if queries else ""
-        has_img = bool(queries) or e.german in IMAGE_LOOKUP
+        has_img = bool(queries)
         art = article_for_german(e.german, section=e.section)
         de_label = german_with_article(e.german, section=e.section, article=art)
         words.append(
@@ -37,12 +38,13 @@ def main() -> None:
                 **({"article": art} if art else {}),
             }
         )
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    VOCAB_JSON.write_text(
-        json.dumps({"words": words}, ensure_ascii=False, indent=2),
+    out = vocabulary_path("a1")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
+        json.dumps({"words": words}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"Wrote {len(words)} words to {VOCAB_JSON}")
+    print(f"Wrote {len(words)} words to {out}")
 
 
 if __name__ == "__main__":

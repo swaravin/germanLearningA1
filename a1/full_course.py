@@ -14,13 +14,7 @@ from a1.audio import (
     get_word_audio_path,
     user_recorded_clip,
 )
-from a1.config import (
-    CUSTOM_VOCAB_JSON,
-    FULL_AUDIO_DIR,
-    PAUSE_AFTER_WORD_SEC,
-    PAUSE_DE_BEFORE_EN_SEC,
-    VOCAB_JSON,
-)
+from a1.levels import custom_vocabulary_path, vocabulary_path
 from a1.vocab import Word, load_all_vocabulary, load_custom_vocabulary, vocabulary_revision
 
 COURSE_FILES = {
@@ -53,14 +47,15 @@ def _ffmpeg() -> str | None:
 
 
 def _vocab_signature() -> str:
-    v, c = vocabulary_revision()
+    v, c = vocabulary_revision("a1")
     return hashlib.sha256(f"{v}:{c}".encode()).hexdigest()[:16]
 
 
 def _custom_signature() -> str:
-    if not CUSTOM_VOCAB_JSON.exists():
+    path = custom_vocabulary_path("a1")
+    if not path.exists():
         return "none"
-    return hashlib.sha256(CUSTOM_VOCAB_JSON.read_bytes()).hexdigest()[:16]
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
 def invalidate_extended_courses() -> None:
@@ -131,7 +126,7 @@ def rebuild_plus_custom_courses(
         if progress:
             progress(msg)
 
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary("a1")
     if not custom:
         return [], [], 0, 0
 
@@ -343,7 +338,7 @@ def _clips_course_path(mode: str) -> Path:
 
 
 def count_clip_words(mode: str, words: list[Word] | None = None) -> int:
-    words = words or load_all_vocabulary()
+    words = words or load_all_vocabulary("a1")
     if mode == "de_only":
         return sum(1 for w in words if get_word_audio_path(w.id, "de"))
     return sum(
@@ -359,7 +354,7 @@ def build_course_from_clips(mode: str, words: list[Word] | None = None) -> Path 
     if not ffmpeg:
         return None
 
-    words = words or load_all_vocabulary()
+    words = words or load_all_vocabulary("a1")
     out = _clips_course_path(mode)
     if out.exists() and out.stat().st_size > 1000:
         return out
@@ -381,7 +376,7 @@ def build_course_from_clips(mode: str, words: list[Word] | None = None) -> Path 
 
 def build_extended_course(mode: str) -> Path | None:
     """Append custom-card clips to an existing base or clip-built course."""
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary("a1")
     if not custom:
         return None
 
@@ -426,7 +421,7 @@ def course_audio_path(mode: str) -> tuple[Path | None, bool, str]:
     if plus := plus_custom_course_path(mode):
         return plus, True, "plus_custom"
 
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary("a1")
 
     official = official_course_path(mode)
     if official and custom:
@@ -452,7 +447,7 @@ def course_audio_path(mode: str) -> tuple[Path | None, bool, str]:
 
 def extended_course_status() -> tuple[int, int, int, list[str]]:
     """Return (custom count, in DE+EN courses, in DE-only course, skipped labels)."""
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary("a1")
     in_both = 0
     in_de_only = 0
     skipped: list[str] = []

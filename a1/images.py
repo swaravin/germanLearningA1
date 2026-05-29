@@ -7,6 +7,7 @@ import requests
 
 from a1.config import IMAGES_DIR
 from a1.image_lookup import IMAGE_LOOKUP
+from a1.articles import NOUN_ARTICLES
 
 SESSION = requests.Session()
 SESSION.headers["User-Agent"] = "A1GermanFlashcards/1.0 (educational; contact: local)"
@@ -89,9 +90,155 @@ ABSTRACT_WORDS = frozenset(
     }
 )
 
+# Sections where flashcard images are misleading (verbs, grammar, etc.)
+_NO_IMAGE_SECTIONS = (
+    "1. Personal Pronouns",
+    "2. Articles & Possessives",
+    "3. Basic Everyday Words",
+    "4. Question Words",
+    "5. Prepositions",
+    "6. Numbers",
+    "7. Essential Verbs",
+    "14. Adjectives",
+    "15. Useful Adverbs",
+)
+
+# Single English tokens that match wrong Wikipedia pages (May, Can, Know, …).
+_AMBIGUOUS_ENGLISH = frozenset(
+    {
+        "a",
+        "an",
+        "as",
+        "be",
+        "by",
+        "can",
+        "do",
+        "go",
+        "he",
+        "if",
+        "in",
+        "is",
+        "it",
+        "know",
+        "like",
+        "may",
+        "must",
+        "no",
+        "ok",
+        "or",
+        "run",
+        "so",
+        "to",
+        "up",
+        "us",
+        "we",
+        "will",
+        "work",
+        "you",
+        "big",
+        "bad",
+        "old",
+        "new",
+        "hot",
+        "red",
+        "arm",
+        "art",
+        "bar",
+        "bat",
+        "bear",
+        "bill",
+        "bow",
+        "change",
+        "close",
+        "cook",
+        "date",
+        "die",
+        "fair",
+        "fast",
+        "fine",
+        "fire",
+        "fit",
+        "flat",
+        "fly",
+        "glass",
+        "gold",
+        "hand",
+        "hard",
+        "help",
+        "iron",
+        "jam",
+        "jet",
+        "kind",
+        "last",
+        "lead",
+        "light",
+        "long",
+        "mail",
+        "mark",
+        "match",
+        "mean",
+        "mine",
+        "miss",
+        "park",
+        "pass",
+        "play",
+        "plum",
+        "post",
+        "ring",
+        "rock",
+        "rose",
+        "spring",
+        "staff",
+        "star",
+        "stop",
+        "table",
+        "talk",
+        "tap",
+        "tie",
+        "trip",
+        "watch",
+        "well",
+        "yard",
+    }
+)
+
+_VISUAL_SECTION_PREFIXES = (
+    "8. Family",
+    "9. Home",
+    "10. Food",
+    "11. Places",
+    "12. Transport",
+    "13. Time",
+)
+
 
 def english_short(en: str) -> str:
     return en.split(" / ")[0].split(" (")[0].strip()
+
+
+def _lemma(german: str) -> str:
+    return german.strip().split()[0] if german.strip() else ""
+
+
+def should_have_image(german: str, english: str, section: str = "") -> bool:
+    """Only concrete nouns / mapped lemmas get pictures — not verbs like kennen → 'know'."""
+    if german in ABSTRACT_WORDS:
+        return False
+    if german in IMAGE_LOOKUP:
+        return True
+    lemma = _lemma(german)
+    titled = lemma[:1].upper() + lemma[1:] if lemma else ""
+    if lemma in NOUN_ARTICLES or titled in NOUN_ARTICLES:
+        return True
+    if section and any(section.startswith(p) for p in _NO_IMAGE_SECTIONS):
+        return False
+    short = english_short(english).lower()
+    if short.startswith("to "):
+        return False
+    if section and any(section.startswith(p) for p in _VISUAL_SECTION_PREFIXES):
+        if lemma and lemma[0].isupper():
+            return True
+    return False
 
 
 def _wiki_title(text: str) -> str:
@@ -105,8 +252,8 @@ def image_query_for(german: str, english: str) -> tuple[str, bool]:
     return queries[0], True
 
 
-def image_queries_for(german: str, english: str) -> list[str]:
-    if german in ABSTRACT_WORDS:
+def image_queries_for(german: str, english: str, section: str = "") -> list[str]:
+    if not should_have_image(german, english, section):
         return []
 
     seen: set[str] = set()
@@ -121,18 +268,23 @@ def image_queries_for(german: str, english: str) -> list[str]:
     if german in IMAGE_LOOKUP:
         add(IMAGE_LOOKUP[german])
 
+    lemma = _lemma(german)
+    if lemma and lemma[0].isupper():
+        add(_wiki_title(lemma))
+        add(lemma)
+
     short = english_short(english)
     if short:
         base = short.split("(")[0].strip()
         if base.lower().startswith("to "):
             base = base[3:].strip()
-        for variant in (base, base.split(",")[0].strip(), base.split("/")[0].strip()):
-            if variant:
-                add(_wiki_title(variant))
-
-    if german[:1].isupper() and german not in ("Sie",):
-        add(german)
-        add(_wiki_title(german))
+        primary = base.split(",")[0].strip().split("/")[0].strip()
+        token = primary.lower()
+        # Prefer multi-word English labels; skip ambiguous one-word queries.
+        if " " in primary and len(primary) > 3:
+            add(_wiki_title(primary))
+        elif token not in _AMBIGUOUS_ENGLISH and len(primary) > 3:
+            add(_wiki_title(primary))
 
     return queries
 
@@ -215,14 +367,23 @@ def _fetch_image_for_query(query: str) -> bytes | None:
     return None
 
 
-def ensure_image(word_id: int, german: str, english: str, query: str = "") -> Path | None:
+def ensure_image(
+    word_id: int,
+    german: str,
+    english: str,
+    query: str = "",
+    section: str = "",
+) -> Path | None:
     """Fetch and cache a picture for a word (Wikipedia + Wikimedia Commons)."""
+    if not should_have_image(german, english, section):
+        return None
+
     path = image_path(word_id)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     if path.exists() and path.stat().st_size > 500:
         return path
 
-    queries = image_queries_for(german, english)
+    queries = image_queries_for(german, english, section)
     if query and query not in queries:
         queries.insert(0, query)
 

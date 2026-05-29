@@ -1,13 +1,25 @@
-const CACHE = "de-a1-v4";
+const CACHE = "de-learn-v9";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/app.css",
   "./js/app.js",
   "./manifest.json",
-  "./data/vocabulary.json",
-  "./data/custom_vocabulary.json",
+  "./data/levels.json",
+  "./data/levels/a1/vocabulary.json",
+  "./data/levels/a1/custom_vocabulary.json",
+  "./data/levels/a2/vocabulary.json",
+  "./data/levels/a2/custom_vocabulary.json",
+  "./data/levels/c1/vocabulary.json",
+  "./data/levels/c1/custom_vocabulary.json",
 ];
+
+
+
+
+
+
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

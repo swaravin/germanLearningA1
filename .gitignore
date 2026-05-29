@@ -8,6 +8,8 @@ assets/images/*.jpg
 assets/audio/*
 !assets/audio/.gitkeep
 assets/full/.course_cache/
+data/word_comfort.json
+data/levels/*/word_comfort.json
 .DS_Store
 *.aiff
 *.m4a

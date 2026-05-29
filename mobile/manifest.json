@@ -1,7 +1,7 @@
 {
-  "name": "German A1 Flashcards",
-  "short_name": "DE A1",
-  "description": "Learn German A1 vocabulary with flashcards",
+  "name": "German Learn — Flashcards",
+  "short_name": "DE Learn",
+  "description": "Learn German vocabulary (A1, A2, …) with offline flashcards",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#eef2f7",

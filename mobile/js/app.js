@@ -2,7 +2,11 @@ const NOUN_ARTICLES = {
   Haus: "das", Hund: "der", Katze: "die", Schiff: "das", Ort: "der", Kirche: "die", Fahrrad: "das",
 };
 
+const CEFR_STORAGE_KEY = "de_cefr_level";
+
 const state = {
+  levels: [],
+  cefrLevel: "a1",
   words: [],
   deck: [],
   index: 0,
@@ -41,15 +45,61 @@ function speak(text, lang) {
   window.speechSynthesis.speak(u);
 }
 
+function currentLevelMeta() {
+  return state.levels.find((l) => l.id === state.cefrLevel) || state.levels[0] || { title: "German Learn", label: "A1" };
+}
+
+function updateHeader() {
+  const meta = currentLevelMeta();
+  document.getElementById("app-title").textContent = `🇩🇪 ${meta.title || "German Learn"}`;
+  document.title = meta.title || "German Learn";
+}
+
+async function loadLevelManifest() {
+  const resp = await fetch("./data/levels.json");
+  const data = await resp.json();
+  state.levels = (data.levels || []).filter((l) => l.id);
+  const saved = localStorage.getItem(CEFR_STORAGE_KEY);
+  if (saved && state.levels.some((l) => l.id === saved)) {
+    state.cefrLevel = saved;
+  } else {
+    state.cefrLevel = data.default || state.levels[0]?.id || "a1";
+  }
+  fillLevelSelect();
+  updateHeader();
+}
+
+function fillLevelSelect() {
+  const sel = document.getElementById("cefr-level");
+  if (!sel) return;
+  sel.innerHTML = "";
+  for (const lv of state.levels) {
+    const opt = document.createElement("option");
+    opt.value = lv.id;
+    const sub = lv.subtitle ? ` — ${lv.subtitle}` : "";
+    opt.textContent = `${lv.label}${sub}`;
+    sel.appendChild(opt);
+  }
+  sel.value = state.cefrLevel;
+}
+
 async function loadWords() {
+  const baseUrl = `./data/levels/${state.cefrLevel}/vocabulary.json`;
+  const customUrl = `./data/levels/${state.cefrLevel}/custom_vocabulary.json`;
   const [baseResp, customResp] = await Promise.all([
-    fetch("./data/vocabulary.json"),
-    fetch("./data/custom_vocabulary.json"),
+    fetch(baseUrl),
+    fetch(customUrl),
   ]);
+  if (!baseResp.ok) {
+    document.getElementById("progress").textContent = `No word list for ${state.cefrLevel.toUpperCase()}.`;
+    state.words = [];
+    state.deck = [];
+    return;
+  }
   const base = (await baseResp.json()).words || [];
   let custom = [];
   try {
-    custom = (await customResp.json()).words || [];
+    if (customResp.ok) custom = (await customResp.json()).words || [];
   } catch (_) {}
   const byId = new Map();
   for (const w of base) byId.set(w.id, w);
@@ -102,8 +152,9 @@ function renderCard() {
 
   const pct = state.deck.length ? ((state.index + 1) / state.deck.length) * 100 : 0;
   document.getElementById("progress-fill").style.width = `${pct}%`;
+  const meta = currentLevelMeta();
   document.getElementById("progress").textContent =
-    `Card ${state.index + 1} / ${state.deck.length} · ${w.section || ""}`;
+    `${meta.label} · Card ${state.index + 1} / ${state.deck.length} · ${w.section || ""}`;
 
   const frontEl = document.getElementById("card-front");
   const backEl = document.getElementById("card-back");
@@ -197,6 +248,15 @@ function setupInstallHint() {
     : "<strong>Install:</strong> use your browser menu → <strong>Add to Home Screen</strong> or <strong>Install app</strong>.";
 }
 
+async function onCefrChange(levelId) {
+  state.cefrLevel = levelId;
+  localStorage.setItem(CEFR_STORAGE_KEY, levelId);
+  state.section = "all";
+  fillLevelSelect();
+  updateHeader();
+  await loadWords();
+}
+
 function bindEvents() {
   document.getElementById("flashcard").addEventListener("click", flipCard);
   document.getElementById("btn-prev").addEventListener("click", prevCard);
@@ -218,6 +278,9 @@ function bindEvents() {
     state.section = e.target.value;
     rebuildDeck();
   });
+  document.getElementById("cefr-level").addEventListener("change", (e) => {
+    onCefrChange(e.target.value);
+  });
   document.getElementById("tab-flash").addEventListener("click", () => showTab("flash"));
   document.getElementById("tab-browse").addEventListener("click", () => showTab("browse"));
   document.getElementById("search").addEventListener("input", (e) => renderBrowse(e.target.value));
@@ -229,6 +292,7 @@ async function init() {
   }
   setupInstallHint();
   bindEvents();
+  await loadLevelManifest();
   await loadWords();
 }
 

@@ -1,5 +1,5 @@
 """
-German A1 flashcard app — run: streamlit run app.py
+German flashcard app (A1, A2, …) — run: streamlit run app.py
 """
 
 from __future__ import annotations
@@ -10,7 +10,8 @@ import streamlit as st
 from a1.audio import delete_word_audio, get_word_audio_path, save_word_audio
 from a1.browser_lookup import apply_sentences, apply_translation, continue_pending_jobs, fetch_audio_to_session
 from a1.word_audio import render_add_card_audio, render_word_audio
-from a1.config import CUSTOM_SECTION, FULL_AUDIO_DIR, ROOT, VOCAB_JSON
+from a1.config import CUSTOM_SECTION, FULL_AUDIO_DIR, ROOT
+from a1.levels import CEFRLevel, all_levels, default_level_id, ensure_level_layout, get_level as get_cefr_meta, level_ids, vocabulary_path
 from a1.full_course import (
     append_word_to_courses,
     clip_words_available,
@@ -22,6 +23,7 @@ from a1.full_course import (
     rebuild_plus_custom_courses,
 )
 from a1.images import ensure_image, image_path, placeholder_svg
+from a1.listen_ui import handle_load_image_query, render_listen_toolbar
 from a1.articles import (
     article_for_german,
     default_example_sentences,
@@ -29,6 +31,23 @@ from a1.articles import (
     german_with_article,
     german_with_article_word,
     pronunciation_display,
+)
+from a1.comfort import (
+    COMFORT_LABELS,
+    COMFORT_FILTERS,
+    comfort_filter_label,
+    comfort_revision,
+    comfort_stats,
+    count_by_comfort_filter,
+    effective_level,
+    explain_empty_comfort_filter,
+    filter_words_by_comfort,
+    get_level as get_comfort_level,
+    index_of_word,
+    normalize_comfort_filter,
+    set_level as set_comfort_level,
+    weighted_pick,
+    weighted_shuffle_deck,
 )
 from a1.vocab import (
     Word,
@@ -58,10 +77,10 @@ FONT_SIZE_OPTIONS = {
 }
 
 st.set_page_config(
-    page_title="German A1 Learn",
+    page_title="German Learn",
     page_icon="🇩🇪",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 st.markdown(
@@ -112,82 +131,68 @@ st.markdown(
     /* Prev / flip / next — see flash-card nav block at end of stylesheet */
     div[data-testid="stSidebar"] { background: #f4f6f4; }
 
-    /* Default Streamlit buttons (light) */
-    .stApp div[data-testid="stButton"] > button[kind="secondary"],
-    .stApp div[data-testid="stButton"] > button:not([kind="primary"]) {
+    /* Default Streamlit buttons (light) — descendant selector for Streamlit 1.57+ */
+    .stApp div[data-testid="stButton"] button[kind="secondary"],
+    .stApp div[data-testid="stButton"] button:not([kind="primary"]) {
         background: #ffffff !important;
         color: #0f3d2e !important;
         border: 1.5px solid #c5d5ce !important;
         border-radius: 10px !important;
     }
-    .stApp div[data-testid="stButton"] > button[kind="secondary"] p,
-    .stApp div[data-testid="stButton"] > button:not([kind="primary"]) p {
+    .stApp div[data-testid="stButton"] button[kind="secondary"] p,
+    .stApp div[data-testid="stButton"] button:not([kind="primary"]) p,
+    .stApp div[data-testid="stButton"] button[kind="secondary"] span,
+    .stApp div[data-testid="stButton"] button:not([kind="primary"]) span {
         color: #0f3d2e !important;
     }
-    .stApp div[data-testid="stButton"] > button[kind="secondary"]:hover,
-    .stApp div[data-testid="stButton"] > button:not([kind="primary"]):hover {
+    .stApp div[data-testid="stButton"] button[kind="secondary"]:hover,
+    .stApp div[data-testid="stButton"] button:not([kind="primary"]):hover {
         background: #f4f8f6 !important;
         border-color: #0f3d2e !important;
         color: #0f3d2e !important;
     }
-    .stApp div[data-testid="stButton"] > button[kind="primary"] {
+    .stApp div[data-testid="stButton"] button[kind="primary"] {
         background: #0f3d2e !important;
         color: #ffffff !important;
         border: 1.5px solid #0f3d2e !important;
         border-radius: 10px !important;
     }
-    .stApp div[data-testid="stButton"] > button[kind="primary"] p {
+    .stApp div[data-testid="stButton"] button[kind="primary"] p,
+    .stApp div[data-testid="stButton"] button[kind="primary"] span {
         color: #ffffff !important;
     }
-    .stApp div[data-testid="stButton"] > button[kind="primary"]:hover {
+    .stApp div[data-testid="stButton"] button[kind="primary"]:hover {
         background: #1a5c45 !important;
         border-color: #1a5c45 !important;
     }
-    [data-testid="stSidebar"] div[data-testid="stButton"] > button {
+    [data-testid="stSidebar"] div[data-testid="stButton"] button {
         background: #ffffff !important;
         color: #0f3d2e !important;
         border: 1px solid #c5d5ce !important;
     }
-    [data-testid="stSidebar"] div[data-testid="stButton"] > button p {
+    [data-testid="stSidebar"] div[data-testid="stButton"] button p,
+    [data-testid="stSidebar"] div[data-testid="stButton"] button span {
         color: #0f3d2e !important;
     }
 
-    /* Flashcard ◀ Prev / ↻ / Next ▶ — must come after generic button rules */
-    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-    div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button {
-        min-height: 42px !important;
+    /* Flashcard ◀ Prev / Flip / Next ▶ — inside bordered card shell */
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+    [data-testid="stButton"] button {
+        min-height: 44px !important;
         border-radius: 10px !important;
-        background: #f4f8f6 !important;
+        background: #e8f0ec !important;
         border: 1.5px solid #0f3d2e !important;
         color: #0f3d2e !important;
         box-shadow: 0 2px 6px rgba(15, 61, 46, 0.12) !important;
     }
-    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-    div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button p {
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+    [data-testid="stButton"] button * {
         color: #0f3d2e !important;
     }
-    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-    div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button:hover {
-        background: #e8f0ec !important;
+    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+    [data-testid="stButton"] button:hover {
+        background: #d4e4dc !important;
         border-color: #0f3d2e !important;
-    }
-    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-    div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
-    div[data-testid="stButton"] > button {
-        width: 48px !important;
-        min-width: 48px !important;
-        max-width: 48px !important;
-        margin: 0 auto !important;
-        border-radius: 50% !important;
-        padding: 0 !important;
-        font-size: 1.35rem !important;
-    }
-    .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-    div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
-    div[data-testid="stButton"] > button p {
-        font-size: 1.35rem !important;
-        line-height: 1 !important;
-        color: #0f3d2e !important;
     }
 
     /* System light / dark — follows iOS / macOS appearance */
@@ -213,62 +218,61 @@ st.markdown(
             border-color: #4ade80 !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="secondary"],
-        .stApp div[data-testid="stButton"] > button:not([kind="primary"]) {
+        .stApp div[data-testid="stButton"] button[kind="secondary"],
+        .stApp div[data-testid="stButton"] button:not([kind="primary"]) {
             background: #243044 !important;
             color: #e2e8f0 !important;
             border-color: #475569 !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="secondary"] p,
-        .stApp div[data-testid="stButton"] > button:not([kind="primary"]) p {
+        .stApp div[data-testid="stButton"] button[kind="secondary"] p,
+        .stApp div[data-testid="stButton"] button:not([kind="primary"]) p,
+        .stApp div[data-testid="stButton"] button[kind="secondary"] span,
+        .stApp div[data-testid="stButton"] button:not([kind="primary"]) span {
             color: #e2e8f0 !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="secondary"]:hover,
-        .stApp div[data-testid="stButton"] > button:not([kind="primary"]):hover {
+        .stApp div[data-testid="stButton"] button[kind="secondary"]:hover,
+        .stApp div[data-testid="stButton"] button:not([kind="primary"]):hover {
             background: #2d3a4f !important;
             border-color: #7eb8e8 !important;
             color: #ffffff !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="primary"] {
+        .stApp div[data-testid="stButton"] button[kind="primary"] {
             background: #7eb8e8 !important;
             color: #0b1220 !important;
             border-color: #7eb8e8 !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="primary"] p {
+        .stApp div[data-testid="stButton"] button[kind="primary"] p,
+        .stApp div[data-testid="stButton"] button[kind="primary"] span {
             color: #0b1220 !important;
         }
-        .stApp div[data-testid="stButton"] > button[kind="primary"]:hover {
+        .stApp div[data-testid="stButton"] button[kind="primary"]:hover {
             background: #9ccbf0 !important;
             border-color: #9ccbf0 !important;
         }
-        [data-testid="stSidebar"] div[data-testid="stButton"] > button {
+        [data-testid="stSidebar"] div[data-testid="stButton"] button {
             background: #243044 !important;
             color: #e2e8f0 !important;
             border-color: #475569 !important;
         }
-        [data-testid="stSidebar"] div[data-testid="stButton"] > button p {
+        [data-testid="stSidebar"] div[data-testid="stButton"] button p,
+        [data-testid="stSidebar"] div[data-testid="stButton"] button span {
             color: #e2e8f0 !important;
         }
-        /* Flashcard nav — after generic dark buttons */
-        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button {
+        /* Flashcard nav — accent buttons, readable on dark card */
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+        [data-testid="stButton"] button {
             background: #1e3a5f !important;
             border-color: #7eb8e8 !important;
             color: #ffffff !important;
         }
-        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button p {
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+        [data-testid="stButton"] button * {
             color: #ffffff !important;
         }
-        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-        div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] > button:hover {
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+        [data-testid="stButton"] button:hover {
             background: #25466d !important;
             border-color: #9ccbf0 !important;
-        }
-        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-nav-marker)
-        div[data-testid="stHorizontalBlock"] div[data-testid="column"]:nth-child(2)
-        div[data-testid="stButton"] > button p {
-            color: #ffffff !important;
         }
         [data-testid="stTextInput"] input,
         [data-testid="stTextArea"] textarea,
@@ -280,6 +284,106 @@ st.markdown(
         [data-testid="stCheckbox"] label span {
             color: #e2e8f0 !important;
         }
+        /* Main area — titles, captions, radio labels (dark-on-dark fix) */
+        [data-testid="stMain"] h1,
+        [data-testid="stMain"] h2,
+        [data-testid="stMain"] h3,
+        [data-testid="stMain"] label,
+        [data-testid="stMain"] [data-testid="stMarkdown"] p,
+        [data-testid="stMain"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMain"] [data-testid="stCaption"],
+        [data-testid="stMain"] [data-testid="stWidgetLabel"] p,
+        [data-testid="stMain"] [data-testid="stRadio"] label span,
+        [data-testid="stMain"] [data-testid="stRadio"] label p,
+        [data-testid="stMain"] [data-testid="stRadio"] legend {
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stRadio"] label span,
+        [data-testid="stSidebar"] [data-testid="stRadio"] label p,
+        [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+            background-color: #1e293b !important;
+            color: #e2e8f0 !important;
+            border-color: #475569 !important;
+        }
+    }
+
+    /* ── Responsive layout (phone, tablet, desktop) ── */
+    .flashcard-layout {
+        width: 100%;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0 0.25rem;
+    }
+
+    .stApp .block-container {
+        max-width: 1200px;
+        padding-top: 1.25rem;
+        padding-bottom: 2rem;
+    }
+
+    .stApp [data-testid="stImage"] img {
+        max-height: min(42vh, 320px);
+        width: auto !important;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+    @media (max-width: 900px) {
+        .stApp .block-container {
+            max-width: 100%;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .flashcard-layout {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stApp .block-container {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            padding-top: 0.75rem;
+        }
+        [data-testid="stHeader"] {
+            background: transparent !important;
+        }
+        [data-testid="stToolbar"] {
+            display: none !important;
+        }
+        .flash-de {
+            font-size: clamp(1.35rem, 7vw, 2rem) !important;
+            word-break: break-word;
+        }
+        .flash-en {
+            font-size: clamp(1.05rem, 4.5vw, 1.45rem) !important;
+            word-break: break-word;
+        }
+        .flash-pron, .flash-card-caption {
+            font-size: clamp(0.82rem, 3.5vw, 1rem) !important;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker) {
+            padding: 0.5rem 0.65rem 0.85rem !important;
+        }
+        .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
+        [data-testid="stButton"] button {
+            min-height: 48px !important;
+            font-size: 0.92rem !important;
+        }
+        [data-testid="column"] [data-testid="stButton"] button {
+            padding-left: 0.25rem !important;
+            padding-right: 0.25rem !important;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .stApp .block-container {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     }
     </style>
     """,
@@ -287,12 +391,130 @@ st.markdown(
 )
 
 
-def load_app_vocabulary() -> list[Word]:
-    """Load built-in + custom cards (always fresh — custom file changes often)."""
-    if not VOCAB_JSON.exists():
-        st.error(f"Missing {VOCAB_JSON}. Run: python scripts/export_vocabulary.py")
+def _cefr() -> str:
+    return st.session_state.get("cefr_level", default_level_id())
+
+
+def _cefr_meta() -> CEFRLevel:
+    return get_cefr_meta(_cefr())
+
+
+def _cefr_level_label(level_id: str) -> str:
+    meta = get_cefr_meta(level_id)
+    return f"{meta.label} — {meta.subtitle}" if meta.subtitle else meta.label
+
+
+def _ensure_cefr_session(level_ids: list[str]) -> None:
+    if "cefr_level" not in st.session_state or st.session_state.cefr_level not in level_ids:
+        st.session_state.cefr_level = default_level_id()
+
+
+def _switch_cefr_level(new_level: str) -> None:
+    if new_level == st.session_state.get("cefr_level"):
+        return
+    st.session_state.cefr_level = new_level
+    st.session_state.deck_filter_key = None
+    st.session_state.pop("deck", None)
+    st.session_state.card_i = 0
+    st.session_state.card_history = []
+    st.rerun()
+
+
+def _comfort_practice_key() -> str:
+    return f"comfort_practice_{_cefr()}"
+
+
+def _section_key() -> str:
+    return f"section_{_cefr()}"
+
+
+def _images_only_key() -> str:
+    return f"images_only_{_cefr()}"
+
+
+def _deck_fingerprint(words: list[Word]) -> tuple[int, ...]:
+    return tuple(sorted(w.id for w in words))
+
+
+def _deck_matches_filter(deck: list[Word], filtered: list[Word]) -> bool:
+    if not deck or not filtered:
+        return not deck and not filtered
+    return _deck_fingerprint(deck) == _deck_fingerprint(filtered)
+
+
+def _deck_filter_key(
+    deck: list[Word],
+    *,
+    cefr_level: str,
+    vocab_rev: tuple[float, float],
+) -> tuple:
+    return (
+        cefr_level,
+        vocab_rev,
+        normalize_comfort_filter(st.session_state.get(_comfort_practice_key(), "all")),
+        comfort_revision(cefr_level),
+        bool(st.session_state.get("comfort_weighted", True)),
+        _deck_fingerprint(deck),
+    )
+
+
+def _build_deck_from_filtered(filtered: list[Word], cefr_level: str) -> list[Word]:
+    if st.session_state.get("comfort_weighted", True):
+        return weighted_shuffle_deck(filtered, cefr_level)
+    return list(filtered)
+
+
+def _sanitize_filter_session() -> None:
+    """Fix corrupted comfort-filter session values from older app versions."""
+    st.session_state.pop("comfort_filter", None)
+    valid = {k for k, _ in COMFORT_FILTERS}
+    for level_id in level_ids():
+        practice_key = f"comfort_practice_{level_id}"
+        if practice_key not in st.session_state:
+            continue
+        normalized = normalize_comfort_filter(st.session_state[practice_key])
+        if normalized not in valid:
+            st.session_state[practice_key] = "all"
+        else:
+            st.session_state[practice_key] = normalized
+
+
+def render_cefr_level_picker_sidebar() -> None:
+    """CEFR level dropdown at top of sidebar."""
+    ensure_level_layout()
+    levels = all_levels()
+    level_ids = [lv.id for lv in levels]
+    _ensure_cefr_session(level_ids)
+    prev = st.session_state.cefr_level
+    choice = st.sidebar.selectbox(
+        "Word list level",
+        options=level_ids,
+        index=level_ids.index(prev),
+        format_func=_cefr_level_label,
+    )
+    if choice != prev:
+        _switch_cefr_level(choice)
+    st.sidebar.divider()
+
+
+def load_app_vocabulary(level_id: str | None = None) -> list[Word]:
+    """Load built-in + custom cards for the selected CEFR level."""
+    level_id = level_id or _cefr()
+    ensure_level_layout()
+    path = vocabulary_path(level_id)
+    if not path.exists() or not path.read_text(encoding="utf-8").strip():
+        st.error(
+            f"Missing word list for **{level_id.upper()}** at `{path}`.\n\n"
+            f"For A1: `python scripts/export_vocabulary.py`\n"
+            f"For A2: `python scripts/seed_a2_vocabulary.py`\n"
+            f"For C1: `python scripts/seed_c1_vocabulary.py`"
+        )
         st.stop()
-    return load_all_vocabulary()
+    words = load_all_vocabulary(level_id)
+    if not words:
+        st.error(f"No words in {path}. Run the export/seed script for this level.")
+        st.stop()
+    return words
 
 
 def _article_from_choice(choice: str) -> str:
@@ -349,25 +571,118 @@ def inject_card_font_css(scale: float) -> None:
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker) {{
             min-height: {shell_min}px !important;
         }}
+        @media (max-width: 640px) {{
+            .flash-card-body {{
+                height: auto !important;
+                min-height: {max(120, int(body_h * 0.75))}px !important;
+                max-height: none !important;
+            }}
+            .flash-card-caption {{
+                height: auto !important;
+                min-height: {max(40, int(caption_h * 0.85))}px !important;
+                max-height: none !important;
+            }}
+            div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker) {{
+                min-height: auto !important;
+            }}
+        }}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
 
-def init_state(deck: list[Word], *, vocab_rev: tuple[float, float]) -> None:
-    key = (
-        vocab_rev,
-        len(deck),
-        deck[0].id if deck else 0,
-        deck[-1].id if deck else 0,
-        deck[0].section if deck else "",
+def init_state(deck: list[Word], *, vocab_rev: tuple[float, float], cefr_level: str) -> None:
+    key = _deck_filter_key(deck, cefr_level=cefr_level, vocab_rev=vocab_rev)
+    session_deck: list[Word] = st.session_state.get("deck") or []
+    needs_rebuild = (
+        st.session_state.get("deck_filter_key") != key
+        or not session_deck
+        or not _deck_matches_filter(session_deck, deck)
     )
-    if st.session_state.get("deck_filter_key") != key:
-        st.session_state.deck = deck
+    if needs_rebuild:
+        st.session_state.deck = _build_deck_from_filtered(deck, cefr_level)
         st.session_state.deck_filter_key = key
         st.session_state.card_i = 0
         st.session_state.flipped = False
+        st.session_state.card_history = []
+    elif st.session_state.deck:
+        st.session_state.card_i = st.session_state.card_i % len(st.session_state.deck)
+    if "card_history" not in st.session_state:
+        st.session_state.card_history = []
+    if "comfort_weighted" not in st.session_state:
+        st.session_state.comfort_weighted = True
+
+
+def _push_card_history(word_id: int) -> None:
+    history: list[int] = st.session_state.get("card_history", [])
+    if history and history[-1] == word_id:
+        return
+    history.append(word_id)
+    st.session_state.card_history = history[-80:]
+
+
+def _go_to_word(word_id: int) -> None:
+    deck: list[Word] = st.session_state.deck
+    st.session_state.card_i = index_of_word(deck, word_id)
+    st.session_state.flipped = False
+
+
+def _go_next_card() -> None:
+    deck: list[Word] = st.session_state.deck
+    if not deck:
+        return
+    current = deck[st.session_state.card_i % len(deck)]
+    _push_card_history(current.id)
+    if st.session_state.get("comfort_weighted", True):
+        nxt = weighted_pick(
+            deck,
+            exclude_id=current.id if len(deck) > 1 else None,
+            cefr_level=_cefr(),
+        )
+        if nxt:
+            _go_to_word(nxt.id)
+            return
+    st.session_state.card_i = (st.session_state.card_i + 1) % len(deck)
+    st.session_state.flipped = False
+
+
+def _go_prev_card() -> None:
+    history: list[int] = st.session_state.get("card_history", [])
+    if history:
+        prev_id = history.pop()
+        st.session_state.card_history = history
+        _go_to_word(prev_id)
+        return
+    deck: list[Word] = st.session_state.deck
+    if deck:
+        st.session_state.card_i = (st.session_state.card_i - 1) % len(deck)
+        st.session_state.flipped = False
+
+
+def _go_random_card() -> None:
+    deck: list[Word] = st.session_state.deck
+    if not deck:
+        return
+    current = deck[st.session_state.card_i % len(deck)]
+    _push_card_history(current.id)
+    if st.session_state.get("comfort_weighted", True):
+        pick = weighted_pick(
+            deck,
+            exclude_id=current.id if len(deck) > 1 else None,
+            cefr_level=_cefr(),
+        )
+        if pick:
+            _go_to_word(pick.id)
+            return
+    import random
+
+    idx = st.session_state.card_i
+    if len(deck) > 1:
+        while (idx := random.randint(0, len(deck) - 1)) == st.session_state.card_i:
+            pass
+    st.session_state.card_i = idx
+    st.session_state.flipped = False
 
 
 def current_card() -> Word | None:
@@ -419,7 +734,7 @@ def _start_edit_card(word_id: int) -> None:
 
 
 def _delete_card(word: Word) -> None:
-    if not delete_custom_word(word.id):
+    if not delete_custom_word(word.id, _cefr()):
         st.error("Could not delete this card.")
         return
     delete_word_audio(word.id)
@@ -434,7 +749,7 @@ def _delete_card(word: Word) -> None:
 
 def render_custom_card_actions(word: Word, *, key_prefix: str) -> None:
     """Edit and delete buttons for a user-created card."""
-    if not is_custom_word(word.id):
+    if not is_custom_word(word.id, _cefr()):
         return
     edit_col, del_col = st.columns(2)
     with edit_col:
@@ -549,6 +864,7 @@ def render_card_edit_form(word: Word, all_words: list[Word]) -> None:
                     word.id,
                     german,
                     english,
+                    level_id=_cefr(),
                     section=str(section),
                     pronunciation=st.session_state.get("edit_pron", ""),
                     sentence_de=st.session_state.get("edit_sent_de", ""),
@@ -634,7 +950,7 @@ def render_card_edit_form(word: Word, all_words: list[Word]) -> None:
 
 
 def render_manage_cards(all_words: list[Word]) -> None:
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary(_cefr())
     edit_id = st.session_state.get("edit_word_id")
     if edit_id is not None:
         word = get_custom_word(int(edit_id))
@@ -667,29 +983,128 @@ def render_manage_cards(all_words: list[Word]) -> None:
             render_custom_card_actions(w, key_prefix="manage")
 
 
-def sidebar(all_words: list[Word]) -> list[Word]:
-    st.sidebar.title("German A1")
-    modes = ["Flashcards", "Browse list", "Add card", "Manage cards", "Listen — full courses"]
+def sidebar(all_words: list[Word]) -> tuple[list[Word], CEFRLevel]:
+    ensure_level_layout()
+    levels = all_levels()
+    level_ids = [lv.id for lv in levels]
+    _ensure_cefr_session(level_ids)
+
+    render_cefr_level_picker_sidebar()
+
+    meta = get_cefr_meta(_cefr())
+    st.sidebar.title(meta.title)
+    if meta.subtitle:
+        st.sidebar.caption(meta.subtitle)
+    st.sidebar.caption(f"{len(all_words)} words · {len(load_custom_vocabulary(_cefr()))} custom")
+
+    modes = ["Flashcards", "Browse list", "Add card", "Manage cards"]
+    if meta.has_feature("mp3_courses"):
+        modes.append("Listen — full courses")
     mode_default = st.session_state.get("mode", "Flashcards")
     mode_index = modes.index(mode_default) if mode_default in modes else 0
     mode = st.sidebar.radio("Mode", modes, index=mode_index)
     st.session_state.mode = mode
 
     sec_list = ["All sections"] + sections(all_words)
-    if load_custom_vocabulary() and CUSTOM_SECTION not in sec_list:
+    if load_custom_vocabulary(_cefr()) and CUSTOM_SECTION not in sec_list:
         sec_list.append(CUSTOM_SECTION)
     section_index = 0
     if (preferred := st.session_state.pop("preferred_section", None)) and preferred in sec_list:
         section_index = sec_list.index(preferred)
-    section = st.sidebar.selectbox("Section", sec_list, index=section_index)
-    images_only = st.sidebar.checkbox("Only words with pictures", value=False)
+    section = st.sidebar.selectbox(
+        "Section",
+        sec_list,
+        index=section_index,
+        key=_section_key(),
+    )
+    images_only = st.sidebar.checkbox(
+        "Only words with pictures",
+        value=False,
+        key=_images_only_key(),
+    )
 
-    filtered = filter_words(all_words, section, images_only)
-    custom_n = len(load_custom_vocabulary())
-    if custom_n:
-        st.sidebar.caption(f"{len(filtered)} words in deck ({custom_n} custom)")
+    section_filtered = filter_words(all_words, section, images_only)
+    filtered = section_filtered
+
+    if mode == "Flashcards":
+        practice_key = _comfort_practice_key()
+        if practice_key not in st.session_state:
+            st.session_state[practice_key] = "all"
+        elif normalize_comfort_filter(st.session_state[practice_key]) != st.session_state[practice_key]:
+            st.session_state[practice_key] = normalize_comfort_filter(st.session_state[practice_key])
+        filter_keys = [k for k, _ in COMFORT_FILTERS]
+
+        st.sidebar.selectbox(
+            "Practice by comfort",
+            options=filter_keys,
+            format_func=comfort_filter_label,
+            key=practice_key,
+            help=(
+                "Rate cards with 1–5 below each flashcard, then pick a level here to practice only those words."
+            ),
+        )
+        comfort_filter = normalize_comfort_filter(st.session_state[practice_key])
+        filtered = filter_words_by_comfort(section_filtered, comfort_filter, _cefr())
+
+        if "comfort_weighted" not in st.session_state:
+            st.session_state.comfort_weighted = True
+        st.sidebar.checkbox(
+            "Prioritize words I know less",
+            value=st.session_state.get("comfort_weighted", True),
+            key="comfort_weighted",
+            help=(
+                "When on, words you rated 1–2 (or not yet rated) appear more often; "
+                "words rated 4–5 appear less. Works with any **Practice by comfort** filter."
+            ),
+        )
+
+        if comfort_filter == "all":
+            st.sidebar.caption(f"**{len(section_filtered)}** words match section & pictures")
+        else:
+            n = len(filtered)
+            total = count_by_comfort_filter(all_words, comfort_filter, _cefr())
+            if section != "All sections" and n != total:
+                st.sidebar.caption(f"**{n}** in deck · **{total}** rated at this level overall")
+            else:
+                st.sidebar.caption(f"**{n}** words in deck")
+        if not filtered:
+            st.sidebar.warning(
+                explain_empty_comfort_filter(
+                    all_words=all_words,
+                    section_filtered=section_filtered,
+                    comfort_filter=comfort_filter,
+                    section=section,
+                    images_only=images_only,
+                    cefr_level=_cefr(),
+                )
+            )
+            fix_col1, fix_col2 = st.sidebar.columns(2)
+            with fix_col1:
+                if comfort_filter != "all" and st.button("All words", key=f"comfort_reset_{_cefr()}"):
+                    st.session_state[practice_key] = "all"
+                    st.session_state.deck_filter_key = None
+                    st.session_state.pop("deck", None)
+                    st.rerun()
+            with fix_col2:
+                if section != "All sections" and st.button("All sections", key=f"section_reset_{_cefr()}"):
+                    st.session_state[_section_key()] = "All sections"
+                    st.session_state.deck_filter_key = None
+                    st.session_state.pop("deck", None)
+                    st.rerun()
+            if images_only and st.sidebar.button(
+                "Include words without pictures",
+                key=f"images_reset_{_cefr()}",
+            ):
+                st.session_state[_images_only_key()] = False
+                st.session_state.deck_filter_key = None
+                st.session_state.pop("deck", None)
+                st.rerun()
+        elif not section_filtered and images_only:
+            st.sidebar.info("Turn off **Only words with pictures** to see verbs and grammar words.")
+    elif mode == "Browse list":
+        st.sidebar.caption(f"{len(all_words)} words · browse shows full list")
     else:
-        st.sidebar.caption(f"{len(filtered)} words in deck")
+        st.sidebar.caption(f"{len(all_words)} words")
 
     if mode == "Flashcards":
         st.sidebar.divider()
@@ -712,41 +1127,79 @@ def sidebar(all_words: list[Word]) -> list[Word]:
         )
         st.session_state.font_size = font_label
 
-    if st.sidebar.button("Shuffle deck"):
-        st.session_state.deck = shuffle_deck(filtered)
-        st.session_state.deck_key = id(st.session_state.deck)
+        st.sidebar.divider()
+        stats = comfort_stats(filtered, _cefr())
+        st.sidebar.caption("**Your comfort** (this deck)")
+        st.sidebar.caption(
+            f"😊 Comfortable: **{stats.comfortable}** · "
+            f"📖 Learning: **{stats.learning}** · "
+            f"💪 Need practice: **{stats.need_practice}**"
+        )
+        if stats.rated:
+            st.sidebar.caption(f"Rated {stats.rated}/{stats.total} words")
+
+    if mode == "Flashcards" and st.sidebar.button("Shuffle deck"):
+        st.session_state.deck = (
+            weighted_shuffle_deck(filtered, _cefr())
+            if st.session_state.get("comfort_weighted", True)
+            else shuffle_deck(filtered)
+        )
+        st.session_state.deck_filter_key = _deck_filter_key(
+            filtered,
+            cefr_level=_cefr(),
+            vocab_rev=vocabulary_revision(_cefr()),
+        )
         st.session_state.card_i = 0
         st.session_state.flipped = False
+        st.session_state.card_history = []
 
-    if st.sidebar.button("Reset order"):
-        st.session_state.deck = filtered
-        st.session_state.deck_key = id(st.session_state.deck)
+    if mode == "Flashcards" and st.sidebar.button("Reset order"):
+        st.session_state.deck = list(filtered)
+        st.session_state.deck_filter_key = _deck_filter_key(
+            filtered,
+            cefr_level=_cefr(),
+            vocab_rev=vocabulary_revision(_cefr()),
+        )
         st.session_state.card_i = 0
         st.session_state.flipped = False
+        st.session_state.card_history = []
 
-    return filtered
+    return filtered, meta
 
 
 def render_flashcard_image(word: Word) -> None:
     """Show a picture above the card when one is available (no placeholder card)."""
-    from a1.images import image_queries_for
+    if not word.has_image:
+        return
 
     cached = image_path(word.id)
     if cached.exists() and cached.stat().st_size > 500:
         st.image(str(cached), use_container_width=True)
         return
 
-    if not image_queries_for(word.german, word.english) and not word.image_query:
+    from a1.images import image_queries_for
+
+    if not image_queries_for(word.german, word.english, word.section) and not word.image_query:
         return
 
     with st.spinner("Loading image…"):
-        path = ensure_image(word.id, word.german, word.english, word.image_query)
+        path = ensure_image(
+            word.id,
+            word.german,
+            word.english,
+            word.image_query,
+            section=word.section,
+        )
     if path and path.exists():
         st.image(str(path), use_container_width=True)
 
 
 def render_word_image(word: Word, *, width: int | None = None, lazy: bool = False) -> None:
     from a1.images import image_queries_for
+
+    if not word.has_image:
+        st.markdown(placeholder_svg(word.german, word.english), unsafe_allow_html=True)
+        return
 
     cached = image_path(word.id)
     if cached.exists() and cached.stat().st_size > 500:
@@ -756,14 +1209,20 @@ def render_word_image(word: Word, *, width: int | None = None, lazy: bool = Fals
             st.image(str(cached), use_container_width=True)
         return
 
-    if not image_queries_for(word.german, word.english) and not word.image_query:
+    if not image_queries_for(word.german, word.english, word.section) and not word.image_query:
         st.markdown(placeholder_svg(word.german, word.english), unsafe_allow_html=True)
         return
 
     if lazy:
         if st.button("Load image from web", key=f"load_img_{word.id}", use_container_width=True):
             with st.spinner("Loading image…"):
-                path = ensure_image(word.id, word.german, word.english, word.image_query)
+                path = ensure_image(
+                    word.id,
+                    word.german,
+                    word.english,
+                    word.image_query,
+                    section=word.section,
+                )
             if path:
                 st.rerun()
             else:
@@ -771,7 +1230,13 @@ def render_word_image(word: Word, *, width: int | None = None, lazy: bool = Fals
         return
 
     with st.spinner("Loading image…"):
-        path = ensure_image(word.id, word.german, word.english, word.image_query)
+        path = ensure_image(
+            word.id,
+            word.german,
+            word.english,
+            word.image_query,
+            section=word.section,
+        )
     if path and path.exists():
         if width:
             st.image(str(path), width=width)
@@ -844,7 +1309,6 @@ def _card_face(word: Word, front_mode: str, flipped: bool) -> tuple[str, str, st
 def render_flashcard_face(word: Word, *, flipped: bool) -> None:
     front_mode = st.session_state.get("front_mode", "German")
     label, main_html, sub_html, caption = _card_face(word, front_mode, flipped)
-    deck_len = len(st.session_state.deck)
 
     with st.container(border=True):
         st.markdown('<div class="flash-card-marker"></div>', unsafe_allow_html=True)
@@ -866,69 +1330,113 @@ def render_flashcard_face(word: Word, *, flipped: bool) -> None:
         nav_prev, nav_flip, nav_next = st.columns([1, 1, 1])
         with nav_prev:
             if st.button("◀ Prev", key="card_prev", help="Previous card", use_container_width=True):
-                st.session_state.card_i = (st.session_state.card_i - 1) % deck_len
-                st.session_state.flipped = False
+                _go_prev_card()
                 st.rerun()
         with nav_flip:
-            if st.button("↻", key="flip_card", help="Flip card", use_container_width=True):
+            if st.button("↻ Flip", key="flip_card", help="Flip card", use_container_width=True):
                 st.session_state.flipped = not flipped
                 st.rerun()
         with nav_next:
             if st.button("Next ▶", key="card_next", help="Next card", use_container_width=True):
-                st.session_state.card_i = (st.session_state.card_i + 1) % deck_len
-                st.session_state.flipped = False
+                _go_next_card()
+                st.rerun()
+
+
+def render_comfort_controls(word: Word) -> None:
+    """Rate how well you know this word — saved locally, affects how often it appears."""
+    saved = get_comfort_level(word.id, _cefr())
+    label = COMFORT_LABELS.get(saved, "Not rated yet") if saved else "Not rated yet"
+    stars = "★" * effective_level(word.id, _cefr()) + "☆" * (5 - effective_level(word.id, _cefr()))
+    st.caption(f"**Comfort:** {label} · {stars}")
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+    buttons = (
+        (c1, 1, "😓 1"),
+        (c2, 2, "2"),
+        (c3, 3, "3 OK"),
+        (c4, 4, "4"),
+        (c5, 5, "😊 5"),
+    )
+    for col, level, text in buttons:
+        with col:
+            btn_type = "primary" if saved == level else "secondary"
+            if st.button(text, key=f"comfort_{word.id}_{level}", type=btn_type, use_container_width=True):
+                set_comfort_level(word.id, level, _cefr())
                 st.rerun()
 
 
 def render_flashcards(word: Word) -> None:
-    _, center, _ = st.columns([1, 2, 1])
+    handle_load_image_query()
+    st.markdown('<div class="flashcard-layout">', unsafe_allow_html=True)
 
-    with center:
-        flipped = st.session_state.flipped
-        st.progress((st.session_state.card_i + 1) / max(len(st.session_state.deck), 1))
-        st.caption(f"Card {st.session_state.card_i + 1} / {len(st.session_state.deck)} · {word.section}")
+    flipped = st.session_state.flipped
+    st.progress((st.session_state.card_i + 1) / max(len(st.session_state.deck), 1))
+    st.caption(f"Card {st.session_state.card_i + 1} / {len(st.session_state.deck)} · {word.section}")
 
-        render_flashcard_image(word)
-        render_flashcard_face(word, flipped=flipped)
+    render_flashcard_image(word)
+    render_flashcard_face(word, flipped=flipped)
+    render_comfort_controls(word)
 
-        if st.button("Random card", use_container_width=True):
-            import random
+    if st.button("Random card", use_container_width=True):
+        _go_random_card()
+        st.rerun()
 
-            st.session_state.card_i = random.randint(0, len(st.session_state.deck) - 1)
-            st.session_state.flipped = False
-            st.rerun()
-
-        st.divider()
-        st.subheader("Listen")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            render_word_audio(
-                "🔊 German word",
-                word.id,
-                "de",
-                german_de_speech(word),
-                lang="de-DE",
-                button_id=f"speak_de_{word.id}",
-                rate=0.78,
-            )
-        with c2:
-            render_word_audio(
-                "🔊 English meaning",
-                word.id,
-                "en",
-                english_short(word.english),
-                lang="en-US",
-                button_id=f"speak_en_{word.id}",
-                rate=1.0,
-            )
-        with c3:
-            if st.button("Load image", use_container_width=True):
-                ensure_image(word.id, word.german, word.english, word.image_query)
+    st.divider()
+    st.subheader("Listen")
+    de_path = get_word_audio_path(word.id, "de")
+    en_path = get_word_audio_path(word.id, "en")
+    if de_path or en_path:
+        ac1, ac2, ac3 = st.columns(3)
+        with ac1:
+            if de_path:
+                st.caption("🔊 German word")
+                st.audio(str(de_path))
+            else:
+                render_word_audio(
+                    "🔊 German word",
+                    word.id,
+                    "de",
+                    german_de_speech(word),
+                    lang="de-DE",
+                    button_id=f"speak_de_{word.id}",
+                    rate=0.78,
+                )
+        with ac2:
+            if en_path:
+                st.caption("🔊 English meaning")
+                st.audio(str(en_path))
+            else:
+                render_word_audio(
+                    "🔊 English meaning",
+                    word.id,
+                    "en",
+                    english_short(word.english),
+                    lang="en-US",
+                    button_id=f"speak_en_{word.id}",
+                    rate=1.0,
+                )
+        with ac3:
+            if st.button("🖼 Load image", key=f"load_img_listen_{word.id}", use_container_width=True):
+                ensure_image(
+                    word.id,
+                    word.german,
+                    word.english,
+                    word.image_query,
+                    section=word.section,
+                )
                 st.rerun()
+    else:
+        render_listen_toolbar(
+            word_id=word.id,
+            german_text=german_de_speech(word),
+            english_text=english_short(word.english),
+        )
 
-        if is_custom_word(word.id):
-            st.divider()
-            render_custom_card_actions(word, key_prefix="flash")
+    if is_custom_word(word.id, _cefr()):
+        st.divider()
+        render_custom_card_actions(word, key_prefix="flash")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_listen() -> None:
@@ -1103,14 +1611,17 @@ def render_listen() -> None:
 
 def render_browse(words: list[Word]) -> None:
     st.header("Word list")
-    st.caption("Full list of course words plus your custom cards (ignores the sidebar section filter).")
+    if not words:
+        st.warning("No words loaded for this level.")
+        return
+    st.caption("Full list for the selected CEFR level (sidebar section filter does not apply here).")
     query = st.text_input(
         "Search",
         placeholder="German, English, or sentence…",
         key="browse_search",
     )
     shown = search_words(words, query)
-    custom_n = sum(1 for w in shown if is_custom_word(w.id))
+    custom_n = sum(1 for w in shown if is_custom_word(w.id, _cefr()))
     st.caption(
         f"{len(shown)} word{'s' if len(shown) != 1 else ''}"
         + (f" ({custom_n} custom)" if custom_n else "")
@@ -1123,15 +1634,15 @@ def render_browse(words: list[Word]) -> None:
     if query.strip():
         display = shown
     else:
-        custom_cards = [w for w in shown if is_custom_word(w.id)]
-        rest = [w for w in shown if not is_custom_word(w.id)]
+        custom_cards = [w for w in shown if is_custom_word(w.id, _cefr())]
+        rest = [w for w in shown if not is_custom_word(w.id, _cefr())]
         display = custom_cards + rest
 
-    if custom_cards := [w for w in display if is_custom_word(w.id)]:
+    if custom_cards := [w for w in display if is_custom_word(w.id, _cefr())]:
         st.subheader(f"My cards ({len(custom_cards)})")
         for w in custom_cards:
             _render_browse_row(w)
-        if rest := [w for w in display if not is_custom_word(w.id)]:
+        if rest := [w for w in display if not is_custom_word(w.id, _cefr())]:
             st.divider()
             st.subheader(f"Course vocabulary ({len(rest)})")
             for w in rest:
@@ -1148,7 +1659,7 @@ def _browse_title(w: Word) -> str:
 
 
 def _render_browse_row(w: Word) -> None:
-    with st.expander(_browse_title(w) + (f" · {w.section}" if is_custom_word(w.id) else "")):
+    with st.expander(_browse_title(w) + (f" · {w.section}" if is_custom_word(w.id, _cefr()) else "")):
         st.write(w.sentence_de)
         st.caption(w.sentence_en)
         audio_de, audio_en = st.columns(2)
@@ -1303,6 +1814,7 @@ def render_add_card(all_words: list[Word]) -> None:
             word = add_custom_word(
                 german,
                 english,
+                level_id=_cefr(),
                 section=str(st.session_state.get("add_new_section", "")).strip()
                 or st.session_state.get("add_section", CUSTOM_SECTION),
                 pronunciation=st.session_state.get("add_pron", ""),
@@ -1347,7 +1859,7 @@ def render_add_card(all_words: list[Word]) -> None:
         st.success(msg)
         st.rerun()
 
-    custom = load_custom_vocabulary()
+    custom = load_custom_vocabulary(_cefr())
     if custom:
         st.divider()
         st.subheader(f"Your cards ({len(custom)})")
@@ -1358,37 +1870,74 @@ def render_add_card(all_words: list[Word]) -> None:
 
 
 def main() -> None:
-    vocab_rev = vocabulary_revision()
-    all_words = load_app_vocabulary()
-    filtered = sidebar(all_words)
-    if not filtered:
-        st.warning("No words match your filters.")
-        return
+    ensure_level_layout()
+    _ensure_cefr_session([lv.id for lv in all_levels()])
+    if "cefr_level" not in st.session_state:
+        st.session_state.cefr_level = default_level_id()
+    _sanitize_filter_session()
 
-    init_state(filtered, vocab_rev=vocab_rev)
-    if (focus_id := st.session_state.pop("focus_word_id", None)) is not None:
-        for i, w in enumerate(st.session_state.deck):
-            if w.id == focus_id:
-                st.session_state.card_i = i
-                st.session_state.flipped = False
-                break
-
+    all_words = load_app_vocabulary(_cefr())
+    filtered, meta = sidebar(all_words)
     mode = st.session_state.get("mode", "Flashcards")
 
-    st.title("🇩🇪 German A1")
+    if mode == "Flashcards" and not filtered:
+        practice_key = _comfort_practice_key()
+        comfort_filter = normalize_comfort_filter(st.session_state.get(practice_key, "all"))
+        section = st.session_state.get(_section_key(), "All sections")
+        images_only = bool(st.session_state.get(_images_only_key(), False))
+        section_filtered = filter_words(all_words, section, images_only)
+        if comfort_filter != "all":
+            st.info(
+                explain_empty_comfort_filter(
+                    all_words=all_words,
+                    section_filtered=section_filtered,
+                    comfort_filter=comfort_filter,
+                    section=section,
+                    images_only=images_only,
+                    cefr_level=_cefr(),
+                )
+            )
+        else:
+            st.warning(
+                explain_empty_comfort_filter(
+                    all_words=all_words,
+                    section_filtered=section_filtered,
+                    comfort_filter="all",
+                    section=section,
+                    images_only=images_only,
+                    cefr_level=_cefr(),
+                )
+            )
+        return
+
+    if mode == "Flashcards":
+        init_state(filtered, vocab_rev=vocabulary_revision(_cefr()), cefr_level=_cefr())
+        if (focus_id := st.session_state.pop("focus_word_id", None)) is not None:
+            for i, w in enumerate(st.session_state.deck):
+                if w.id == focus_id:
+                    st.session_state.card_i = i
+                    st.session_state.flipped = False
+                    break
+
     if mode == "Flashcards":
         scale = FONT_SIZE_OPTIONS.get(st.session_state.get("font_size", "Normal"), 1.0)
         inject_card_font_css(scale)
         word = current_card()
         if word:
             render_flashcards(word)
+        else:
+            st.warning("No card loaded. Click **Shuffle deck** in the sidebar.")
     elif mode == "Listen — full courses":
+        st.title(f"🇩🇪 {meta.title}")
         render_listen()
     elif mode == "Add card":
+        st.title(f"🇩🇪 {meta.title}")
         render_add_card(all_words)
     elif mode == "Manage cards":
+        st.title(f"🇩🇪 {meta.title}")
         render_manage_cards(all_words)
     else:
+        st.title(f"🇩🇪 {meta.title}")
         render_browse(all_words)
 
 

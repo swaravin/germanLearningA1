@@ -1,0 +1,39 @@
+{
+  "default": "a1",
+  "levels": [
+    {
+      "id": "a1",
+      "label": "A1",
+      "title": "German A1",
+      "subtitle": "Beginner",
+      "features": [
+        "mp3_courses",
+        "images",
+        "custom_cards",
+        "comfort"
+      ]
+    },
+    {
+      "id": "a2",
+      "label": "A2",
+      "title": "German A2",
+      "subtitle": "Elementary",
+      "features": [
+        "images",
+        "custom_cards",
+        "comfort"
+      ]
+    },
+    {
+      "id": "c1",
+      "label": "C1",
+      "title": "German C1",
+      "subtitle": "Advanced — Goethe",
+      "features": [
+        "images",
+        "custom_cards",
+        "comfort"
+      ]
+    }
+  ]
+}

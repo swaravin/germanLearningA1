@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="DE A1" />
+    <meta name="apple-mobile-web-app-title" content="German Learn" />
     <meta name="theme-color" content="#1a4d7a" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
-    <title>German A1</title>
+    <title>German Learn</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
     <link rel="stylesheet" href="css/app.css" />
@@ -20,13 +20,17 @@
   <body>
     <div class="shell">
       <header>
-        <h1>🇩🇪 German A1</h1>
-        <p>Flashcards · works offline after first open</p>
+        <h1 id="app-title">🇩🇪 German Learn</h1>
+        <p id="app-subtitle">Flashcards · works offline after first open</p>
       </header>
 
       <div id="install-hint" class="install-hint"></div>
 
       <div id="flash-view">
+        <div class="toolbar toolbar-level">
+          <label class="level-picker-label" for="cefr-level">Word list level</label>
+          <select id="cefr-level" aria-label="CEFR level"></select>
+        </div>
         <div class="toolbar">
           <select id="section-filter" aria-label="Section"></select>
           <select id="front-mode" aria-label="Front side">

@@ -10,7 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from a1.articles import article_for_german, default_example_sentences, german_with_article
-from a1.config import AUDIO_DIR, CUSTOM_VOCAB_JSON, VOCAB_JSON
+from a1.config import AUDIO_DIR
+from a1.levels import all_levels, custom_vocabulary_path, ensure_level_layout, vocabulary_path
 
 
 def _patch_file(path: Path) -> tuple[int, int]:
@@ -48,14 +49,16 @@ def _patch_file(path: Path) -> tuple[int, int]:
 
 
 def main() -> None:
+    ensure_level_layout()
     total_u = total_c = 0
-    for path in (VOCAB_JSON, CUSTOM_VOCAB_JSON):
-        if not path.exists():
-            continue
-        u, c = _patch_file(path)
-        total_u += u
-        total_c += c
-        print(f"Patched {path.name}: {u} articles updated, {c} German clips cleared")
+    for lv in all_levels():
+        for path in (vocabulary_path(lv.id), custom_vocabulary_path(lv.id)):
+            if not path.exists():
+                continue
+            u, c = _patch_file(path)
+            total_u += u
+            total_c += c
+            print(f"[{lv.id}] {path.name}: {u} articles updated, {c} German clips cleared")
     print("Done. Re-run pregenerate_word_audio.py or rebuild full MP3 courses for new speech.")
 
 
