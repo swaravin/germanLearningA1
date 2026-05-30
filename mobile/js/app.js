@@ -365,6 +365,16 @@ function updateComfortUI(word) {
   });
 }
 
+function syncFlipFaces() {
+  const frontEl = document.getElementById("card-front");
+  const backEl = document.getElementById("card-back");
+  if (!frontEl || !backEl) return;
+  frontEl.classList.toggle("face-visible", !state.flipped);
+  frontEl.classList.toggle("face-hidden", state.flipped);
+  backEl.classList.toggle("face-visible", state.flipped);
+  backEl.classList.toggle("face-hidden", !state.flipped);
+}
+
 function renderCard() {
   const card = document.getElementById("flashcard");
   const w = currentWord();
@@ -376,7 +386,6 @@ function renderCard() {
     return;
   }
   card.classList.remove("hidden");
-  card.classList.remove("flipped");
   state.flipped = false;
 
   const pct = state.deck.length ? ((state.index + 1) / state.deck.length) * 100 : 0;
@@ -410,11 +419,13 @@ function renderCard() {
   } else {
     sent.innerHTML = "";
   }
+
+  syncFlipFaces();
 }
 
 function flipCard() {
   state.flipped = !state.flipped;
-  document.getElementById("flashcard").classList.toggle("flipped", state.flipped);
+  syncFlipFaces();
 }
 
 function nextCard() {

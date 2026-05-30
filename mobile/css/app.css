@@ -215,8 +215,7 @@ header p {
 }
 
 .card-wrap {
-  perspective: 1200px;
-  -webkit-perspective: 1200px;
+  width: 100%;
 }
 
 .card {
@@ -230,14 +229,6 @@ header p {
   padding: 0;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.35s ease;
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
-}
-
-.card.flipped {
-  transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg);
 }
 
 .card-face {
@@ -253,24 +244,21 @@ header p {
   align-items: center;
   justify-content: center;
   width: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
-  -webkit-transform-style: preserve-3d;
+  transition: opacity 0.2s ease;
 }
 
-.card-front {
-  transform: rotateY(0deg);
-  -webkit-transform: rotateY(0deg);
-  z-index: 2;
+.card-face.face-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-.card-back {
-  transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg);
+.card-face.face-visible {
+  opacity: 1;
+  visibility: visible;
 }
 
-.card:active .card-face {
+.card:active .card-face.face-visible {
   filter: brightness(0.96);
 }
 
