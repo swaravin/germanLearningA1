@@ -216,56 +216,62 @@ header p {
 
 .card-wrap {
   perspective: 1200px;
+  -webkit-perspective: 1200px;
 }
 
 .card {
   position: relative;
+  width: 100%;
   min-height: clamp(200px, 38dvh, 320px);
+  border-radius: var(--radius);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.35s ease;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
   border-radius: var(--radius);
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: clamp(18px, 4vw, 28px) clamp(16px, 3.5vw, 22px) clamp(16px, 3vw, 22px);
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.35s ease, box-shadow 0.2s ease;
-  transform-style: preserve-3d;
-  overflow: hidden;
-}
-
-.card:active {
-  transform: scale(0.985);
-}
-
-.card.flipped {
-  transform: rotateY(180deg);
-}
-
-.card.flipped:active {
-  transform: rotateY(180deg) scale(0.985);
-}
-
-.card-face {
-  backface-visibility: hidden;
-  min-height: clamp(140px, 28dvh, 200px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 0 4px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.card-front {
+  transform: rotateY(0deg);
+  -webkit-transform: rotateY(0deg);
+  z-index: 2;
 }
 
 .card-back {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 28px 22px;
   transform: rotateY(180deg);
-  backface-visibility: hidden;
+  -webkit-transform: rotateY(180deg);
+}
+
+.card:active .card-face {
+  filter: brightness(0.96);
 }
 
 .card-hint {
