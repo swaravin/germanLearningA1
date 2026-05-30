@@ -15,14 +15,37 @@
     <title>German Learn</title>
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
-    <link rel="stylesheet" href="css/app.css?v=16" />
+    <link rel="stylesheet" href="css/app.css?v=17" />
   </head>
   <body>
     <div class="shell">
       <header>
-        <h1 id="app-title">🇩🇪 German Learn</h1>
-        <p id="app-subtitle">Flashcards · works offline after first open</p>
+        <div class="header-row">
+          <div class="header-main">
+            <h1 id="app-title">🇩🇪 German Learn</h1>
+            <p id="app-subtitle">Flashcards · works offline after first open</p>
+          </div>
+          <button type="button" id="btn-settings" class="settings-btn" aria-label="Settings" aria-expanded="false">⚙</button>
+        </div>
       </header>
+
+      <div id="settings-panel" class="settings-panel hidden" role="region" aria-label="Settings">
+        <h2 class="settings-title">Settings</h2>
+        <p class="settings-section-label">Comfort backup</p>
+        <div class="settings-actions">
+          <button type="button" id="btn-export-comfort" class="settings-action">Export this level</button>
+          <button type="button" id="btn-export-comfort-all" class="settings-action">Export all levels</button>
+          <label class="settings-import">
+            Import JSON
+            <input type="file" id="comfort-import-file" accept=".json,application/json" hidden />
+          </label>
+        </div>
+        <p id="settings-import-status" class="settings-status" role="status"></p>
+        <label class="settings-toggle">
+          <input type="checkbox" id="browse-show-comfort" />
+          Show comfort stars in word list
+        </label>
+      </div>
 
       <div id="install-hint" class="install-hint"></div>
 
@@ -99,5 +122,5 @@
       <button type="button" id="tab-browse">Word list</button>
     </nav>
   </body>
-  <script src="js/app.js?v=16" defer></script>
+  <script src="js/app.js?v=17" defer></script>
 </html>

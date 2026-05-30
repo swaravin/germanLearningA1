@@ -4,6 +4,9 @@ const NOUN_ARTICLES = {
 
 const CEFR_STORAGE_KEY = "de_cefr_level";
 const COMFORT_WEIGHTED_KEY = "de_comfort_weighted";
+const BROWSE_SHOW_COMFORT_KEY = "de_browse_show_comfort";
+const COMFORT_EXPORT_FORMAT = "german-learn-comfort";
+const COMFORT_EXPORT_VERSION = 2;
 
 const COMFORT_FILTERS = [
   ["all", "All words"],
@@ -43,6 +46,7 @@ const state = {
   cardFrontHtml: "",
   cardBackHtml: "",
   flipAnimating: false,
+  browseShowComfort: false,
 };
 
 function comfortStorageKey(levelId = state.cefrLevel) {
@@ -72,23 +76,146 @@ function comfortFilterLabel(filterKey) {
   return match ? match[1] : key;
 }
 
-function loadComfortData() {
+function readComfortDataFor(levelId) {
   try {
-    const raw = localStorage.getItem(comfortStorageKey());
-    if (!raw) {
-      state.comfortData = { version: 1, words: {} };
-      return;
-    }
+    const raw = localStorage.getItem(comfortStorageKey(levelId));
+    if (!raw) return { version: 1, words: {} };
     const data = JSON.parse(raw);
-    state.comfortData =
-      data && typeof data === "object" ? { version: 1, words: data.words || {} } : { version: 1, words: {} };
+    return data && typeof data === "object" ? { version: 1, words: data.words || {} } : { version: 1, words: {} };
   } catch (_) {
-    state.comfortData = { version: 1, words: {} };
+    return { version: 1, words: {} };
   }
 }
 
+function writeComfortDataFor(levelId, data) {
+  localStorage.setItem(comfortStorageKey(levelId), JSON.stringify(data));
+}
+
+function loadComfortData() {
+  state.comfortData = readComfortDataFor(state.cefrLevel);
+}
+
 function saveComfortData() {
-  localStorage.setItem(comfortStorageKey(), JSON.stringify(state.comfortData));
+  writeComfortDataFor(state.cefrLevel, state.comfortData);
+}
+
+function sanitizeWordEntry(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const level = Number(raw.level);
+  if (!Number.isFinite(level)) return null;
+  return {
+    level: Math.max(MIN_COMFORT, Math.min(MAX_COMFORT, level)),
+    seen: Number(raw.seen || 0),
+    updated: String(raw.updated || new Date().toISOString()),
+  };
+}
+
+function mergeWordEntry(existing, incoming) {
+  if (!existing) return incoming;
+  const exUpdated = String(existing.updated || "");
+  const inUpdated = String(incoming.updated || "");
+  return inUpdated >= exUpdated ? incoming : existing;
+}
+
+function importWordsIntoLevel(levelId, words, merge = true) {
+  if (!words || typeof words !== "object") return 0;
+  const data = readComfortDataFor(levelId);
+  let changed = 0;
+  for (const [wordId, raw] of Object.entries(words)) {
+    const entry = sanitizeWordEntry(raw);
+    if (!entry) continue;
+    const key = String(wordId);
+    if (merge) {
+      const merged = mergeWordEntry(data.words[key], entry);
+      if (JSON.stringify(merged) !== JSON.stringify(data.words[key])) {
+        data.words[key] = merged;
+        changed += 1;
+      }
+    } else {
+      data.words[key] = entry;
+      changed += 1;
+    }
+  }
+  if (changed) writeComfortDataFor(levelId, data);
+  if (levelId === state.cefrLevel) state.comfortData = data;
+  return changed;
+}
+
+function importComfortPayload(payload, merge = true) {
+  if (!payload || typeof payload !== "object") return { count: 0, message: "Invalid file." };
+  let total = 0;
+  if (payload.levels && typeof payload.levels === "object") {
+    for (const [levelId, words] of Object.entries(payload.levels)) {
+      total += importWordsIntoLevel(String(levelId).toLowerCase(), words, merge);
+    }
+    return { count: total, message: total ? `Imported ${total} rating(s).` : "No new ratings to import." };
+  }
+  if (!payload.words || typeof payload.words !== "object") {
+    return { count: 0, message: "Invalid file: missing words or levels." };
+  }
+  const levelId = String(payload.level || state.cefrLevel).toLowerCase();
+  total = importWordsIntoLevel(levelId, payload.words, merge);
+  return { count: total, message: total ? `Imported ${total} rating(s).` : "No new ratings to import." };
+}
+
+function downloadJson(payload, filename) {
+  const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportComfortLevel(levelId = state.cefrLevel) {
+  const data = readComfortDataFor(levelId);
+  downloadJson(
+    {
+      format: COMFORT_EXPORT_FORMAT,
+      version: COMFORT_EXPORT_VERSION,
+      level: levelId,
+      exported_at: new Date().toISOString(),
+      words: data.words || {},
+    },
+    `comfort_${levelId}.json`
+  );
+}
+
+function exportAllComfort() {
+  const levels = {};
+  for (const lv of state.levels) levels[lv.id] = readComfortDataFor(lv.id).words || {};
+  downloadJson(
+    {
+      format: COMFORT_EXPORT_FORMAT,
+      version: COMFORT_EXPORT_VERSION,
+      exported_at: new Date().toISOString(),
+      levels,
+    },
+    "comfort_all_levels.json"
+  );
+}
+
+function comfortStarsHtml(wordId) {
+  if (!state.browseShowComfort) return "";
+  const level = getComfortLevel(wordId);
+  const stars = level ? "★".repeat(level) + "☆".repeat(5 - level) : "☆☆☆☆☆";
+  const label = level ? `Comfort ${level} of 5` : "Not rated";
+  return `<span class="word-stars" aria-label="${label}">${stars}</span>`;
+}
+
+function setSettingsStatus(message) {
+  const el = document.getElementById("settings-import-status");
+  if (el) el.textContent = message || "";
+}
+
+function toggleSettingsPanel(forceOpen) {
+  const panel = document.getElementById("settings-panel");
+  const btn = document.getElementById("btn-settings");
+  if (!panel || !btn) return;
+  const open = forceOpen ?? panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function getComfortLevel(wordId) {
@@ -240,6 +367,7 @@ async function loadLevelManifest() {
   }
   const weightedSaved = localStorage.getItem(COMFORT_WEIGHTED_KEY);
   state.comfortWeighted = weightedSaved == null ? true : weightedSaved === "true";
+  state.browseShowComfort = localStorage.getItem(BROWSE_SHOW_COMFORT_KEY) === "true";
   fillLevelSelect();
   updateHeader();
 }
@@ -278,6 +406,8 @@ function loadComfortPreferences() {
   fillComfortSelect();
   const weightedEl = document.getElementById("comfort-weighted");
   if (weightedEl) weightedEl.checked = state.comfortWeighted;
+  const browseComfortEl = document.getElementById("browse-show-comfort");
+  if (browseComfortEl) browseComfortEl.checked = state.browseShowComfort;
 }
 
 async function loadWords() {
@@ -510,7 +640,7 @@ function renderBrowse(query = "") {
     .slice(0, 200)
     .map(
       (w) =>
-        `<li><div class="de">${germanDisplay(w)}</div><div class="en">${englishShort(w.english)}</div></li>`
+        `<li>${comfortStarsHtml(w.id)}<div class="de">${germanDisplay(w)}</div><div class="en">${englishShort(w.english)}</div></li>`
     )
     .join("");
   if (items.length > 200) {
@@ -597,6 +727,39 @@ function bindEvents() {
   document.getElementById("tab-flash").addEventListener("click", () => showTab("flash"));
   document.getElementById("tab-browse").addEventListener("click", () => showTab("browse"));
   document.getElementById("search").addEventListener("input", (e) => renderBrowse(e.target.value));
+  document.getElementById("btn-settings").addEventListener("click", () => toggleSettingsPanel());
+  document.getElementById("btn-export-comfort").addEventListener("click", () => {
+    exportComfortLevel();
+    setSettingsStatus(`Exported ${state.cefrLevel.toUpperCase()} comfort.`);
+  });
+  document.getElementById("btn-export-comfort-all").addEventListener("click", () => {
+    exportAllComfort();
+    setSettingsStatus("Exported all levels.");
+  });
+  document.getElementById("comfort-import-file").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const payload = JSON.parse(await file.text());
+      const result = importComfortPayload(payload, true);
+      setSettingsStatus(result.message);
+      rebuildDeck();
+      if (document.getElementById("browse-view") && !document.getElementById("browse-view").classList.contains("hidden")) {
+        renderBrowse(document.getElementById("search").value);
+      }
+      updateComfortUI(currentWord());
+    } catch (_) {
+      setSettingsStatus("Could not read JSON file.");
+    }
+    e.target.value = "";
+  });
+  document.getElementById("browse-show-comfort").addEventListener("change", (e) => {
+    state.browseShowComfort = e.target.checked;
+    localStorage.setItem(BROWSE_SHOW_COMFORT_KEY, String(state.browseShowComfort));
+    if (!document.getElementById("browse-view").classList.contains("hidden")) {
+      renderBrowse(document.getElementById("search").value);
+    }
+  });
 }
 
 async function init() {
@@ -606,6 +769,8 @@ async function init() {
   setupInstallHint();
   fillComfortSelect();
   bindEvents();
+  const browseComfortEl = document.getElementById("browse-show-comfort");
+  if (browseComfortEl) browseComfortEl.checked = state.browseShowComfort;
   await loadLevelManifest();
   await loadWords();
 }

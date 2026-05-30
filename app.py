@@ -5,6 +5,8 @@ German flashcard app (A1, A2, …) — run: streamlit run app.py
 from __future__ import annotations
 
 import html
+import json
+
 import streamlit as st
 
 from a1.audio import delete_word_audio, get_word_audio_path, save_word_audio
@@ -41,11 +43,15 @@ from a1.comfort import (
     count_by_comfort_filter,
     effective_level,
     explain_empty_comfort_filter,
+    export_all_payload,
+    export_level_payload,
     filter_words_by_comfort,
     get_level as get_comfort_level,
+    import_comfort_payload,
     index_of_word,
     normalize_comfort_filter,
     set_level as set_comfort_level,
+    stars_display,
     weighted_pick,
     weighted_shuffle_deck,
 )
@@ -1164,7 +1170,69 @@ def sidebar(all_words: list[Word]) -> tuple[list[Word], CEFRLevel]:
         st.session_state.flipped = False
         st.session_state.card_history = []
 
+    render_settings_sidebar()
+
     return filtered, meta
+
+
+def render_settings_sidebar() -> None:
+    """Comfort backup and browse display options — collapsed by default."""
+    with st.sidebar.expander("⚙️ Settings"):
+        st.caption("Comfort ratings backup (web ↔ mobile)")
+        level = _cefr()
+        level_payload = export_level_payload(level)
+        st.download_button(
+            f"Export {level.upper()} comfort",
+            data=json.dumps(level_payload, indent=2, ensure_ascii=False) + "\n",
+            file_name=f"comfort_{level}.json",
+            mime="application/json",
+            use_container_width=True,
+            key=f"export_comfort_{level}",
+        )
+        all_payload = export_all_payload(level_ids())
+        st.download_button(
+            "Export all levels",
+            data=json.dumps(all_payload, indent=2, ensure_ascii=False) + "\n",
+            file_name="comfort_all_levels.json",
+            mime="application/json",
+            use_container_width=True,
+            key="export_comfort_all",
+        )
+        uploaded = st.file_uploader(
+            "Import comfort JSON",
+            type=["json"],
+            key="comfort_import_file",
+            help="Merges with existing ratings. Use a file exported from web or mobile.",
+        )
+        if uploaded is not None:
+            import_key = f"comfort_import_done_{uploaded.file_id}"
+            if st.button("Apply import", key="comfort_import_apply", use_container_width=True):
+                try:
+                    payload = json.loads(uploaded.getvalue().decode("utf-8"))
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    st.error("Could not read JSON file.")
+                else:
+                    count, warnings = import_comfort_payload(payload, default_level=level, merge=True)
+                    st.session_state.pop("deck", None)
+                    st.session_state.deck_filter_key = None
+                    st.session_state[import_key] = True
+                    if count:
+                        st.success(f"Imported {count} comfort rating(s).")
+                    else:
+                        st.info("No new ratings to import.")
+                    for msg in warnings:
+                        st.warning(msg)
+                    st.rerun()
+
+        st.divider()
+        st.caption("Word list")
+        if "browse_show_comfort" not in st.session_state:
+            st.session_state.browse_show_comfort = False
+        st.checkbox(
+            "Show comfort stars in browse list",
+            key="browse_show_comfort",
+            help="Adds ★ ratings to each row in Browse list mode only.",
+        )
 
 
 def render_flashcard_image(word: Word) -> None:
@@ -1654,8 +1722,13 @@ def render_browse(words: list[Word]) -> None:
 
 def _browse_title(w: Word) -> str:
     if w.article:
-        return f"{w.article} {w.german} — {w.english}"
-    return f"{w.german} — {w.english}"
+        title = f"{w.article} {w.german} — {w.english}"
+    else:
+        title = f"{w.german} — {w.english}"
+    if st.session_state.get("browse_show_comfort"):
+        level = get_comfort_level(w.id, _cefr())
+        title = f"{stars_display(level)}  {title}"
+    return title
 
 
 def _render_browse_row(w: Word) -> None:

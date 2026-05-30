@@ -7,7 +7,7 @@ import random
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from a1.levels import comfort_path, normalize_level_id
+from a1.levels import comfort_path, level_ids, normalize_level_id
 from a1.vocab import Word
 
 MIN_LEVEL = 1
@@ -33,6 +33,9 @@ COMFORT_FILTERS: tuple[tuple[str, str], ...] = (
     ("4", "4 — Good"),
     ("5", "5 — Comfortable"),
 )
+
+EXPORT_FORMAT = "german-learn-comfort"
+EXPORT_VERSION = 2
 
 
 def comfort_filter_label(filter_key: str) -> str:
@@ -296,3 +299,116 @@ def explain_empty_comfort_filter(
         "No words match this comfort filter in the current section. "
         "Try **All sections** or **All words**, then rate cards with 1–5."
     )
+
+
+def stars_display(level: int | None) -> str:
+    if level is None:
+        return "☆☆☆☆☆"
+    lv = max(MIN_LEVEL, min(MAX_LEVEL, int(level)))
+    return "★" * lv + "☆" * (5 - lv)
+
+
+def _sanitize_word_entry(raw: dict) -> dict | None:
+    if not isinstance(raw, dict):
+        return None
+    try:
+        level = int(raw.get("level", DEFAULT_LEVEL))
+    except (TypeError, ValueError):
+        return None
+    level = max(MIN_LEVEL, min(MAX_LEVEL, level))
+    seen = int(raw.get("seen", 0) or 0)
+    updated = str(raw.get("updated") or _now_iso())
+    return {"level": level, "seen": seen, "updated": updated}
+
+
+def _merge_word_entry(existing: dict | None, incoming: dict) -> dict:
+    if not existing:
+        return incoming
+    ex_updated = str(existing.get("updated", ""))
+    in_updated = str(incoming.get("updated", ""))
+    return incoming if in_updated >= ex_updated else existing
+
+
+def export_level_payload(level_id: str | None = None) -> dict:
+    level_id = normalize_level_id(level_id)
+    data = _load_raw(level_id)
+    return {
+        "format": EXPORT_FORMAT,
+        "version": EXPORT_VERSION,
+        "level": level_id,
+        "exported_at": _now_iso(),
+        "words": data.get("words", {}),
+    }
+
+
+def export_all_payload(levels: list[str] | None = None) -> dict:
+    ids = levels or level_ids()
+    return {
+        "format": EXPORT_FORMAT,
+        "version": EXPORT_VERSION,
+        "exported_at": _now_iso(),
+        "levels": {lid: _load_raw(lid).get("words", {}) for lid in ids},
+    }
+
+
+def _import_words_into_level(
+    words: dict,
+    level_id: str,
+    *,
+    merge: bool = True,
+) -> int:
+    if not isinstance(words, dict):
+        return 0
+    level_id = normalize_level_id(level_id)
+    data = _load_raw(level_id)
+    target = data.setdefault("words", {})
+    changed = 0
+    for word_id, raw in words.items():
+        entry = _sanitize_word_entry(raw if isinstance(raw, dict) else {})
+        if not entry:
+            continue
+        key = str(word_id)
+        if merge:
+            merged = _merge_word_entry(target.get(key), entry)
+            if merged != target.get(key):
+                target[key] = merged
+                changed += 1
+        else:
+            target[key] = entry
+            changed += 1
+    if changed:
+        _save_raw(data, level_id)
+    return changed
+
+
+def import_comfort_payload(
+    payload: dict,
+    *,
+    default_level: str | None = None,
+    merge: bool = True,
+) -> tuple[int, list[str]]:
+    """Import exported comfort JSON. Returns (words merged, warnings)."""
+    warnings: list[str] = []
+    if not isinstance(payload, dict):
+        return 0, ["Invalid file: expected a JSON object."]
+
+    total = 0
+    default_level = normalize_level_id(default_level)
+
+    if isinstance(payload.get("levels"), dict):
+        for level_id, words in payload["levels"].items():
+            if not isinstance(words, dict):
+                warnings.append(f"Skipped level {level_id}: invalid words object.")
+                continue
+            total += _import_words_into_level(words, str(level_id).lower(), merge=merge)
+        return total, warnings
+
+    words = payload.get("words")
+    if not isinstance(words, dict):
+        return 0, ["Invalid file: missing words or levels."]
+
+    level_id = payload.get("level") or default_level
+    if payload.get("format") != EXPORT_FORMAT and "level" not in payload:
+        warnings.append(f"Legacy file — imported into **{level_id.upper()}**.")
+    total += _import_words_into_level(words, str(level_id).lower(), merge=merge)
+    return total, warnings
