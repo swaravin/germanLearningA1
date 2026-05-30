@@ -1,4 +1,4 @@
-const CACHE = "de-learn-v11";
+const CACHE = "de-learn-v12";
 const ASSETS = [
   "./",
   "./index.html",
@@ -14,10 +14,23 @@ const ASSETS = [
   "./data/levels/c1/custom_vocabulary.json",
 ];
 
+function isNetworkFirst(url) {
+  const path = url.pathname;
+  return (
+    path.endsWith("/") ||
+    path.endsWith("/index.html") ||
+    path.endsWith("/js/app.js") ||
+    path.endsWith("/css/app.css") ||
+    path.endsWith("/data/levels.json")
+  );
+}
 
-
-function isLevelsManifest(url) {
-  return url.pathname.endsWith("/data/levels.json");
+function cacheResponse(request, response) {
+  if (response && response.status === 200) {
+    const copy = response.clone();
+    caches.open(CACHE).then((cache) => cache.put(request, copy));
+  }
+  return response;
 }
 
 self.addEventListener("install", (event) => {
@@ -41,16 +54,10 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (!url.origin.startsWith(self.location.origin)) return;
 
-  if (isLevelsManifest(url)) {
+  if (isNetworkFirst(url)) {
     event.respondWith(
       fetch(event.request)
-        .then((resp) => {
-          if (resp && resp.status === 200) {
-            const copy = resp.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          }
-          return resp;
-        })
+        .then((resp) => cacheResponse(event.request, resp))
         .catch(() => caches.match(event.request))
     );
     return;
@@ -59,13 +66,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
-        .then((resp) => {
-          if (resp && resp.status === 200) {
-            const copy = resp.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-          }
-          return resp;
-        })
+        .then((resp) => cacheResponse(event.request, resp))
         .catch(() => cached);
       return cached || network;
     })
