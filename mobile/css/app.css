@@ -216,6 +216,8 @@ header p {
 
 .card-wrap {
   width: 100%;
+  perspective: 1200px;
+  -webkit-perspective: 1200px;
 }
 
 .card {
@@ -229,9 +231,27 @@ header p {
   padding: clamp(18px, 4vw, 28px) clamp(16px, 3.5vw, 22px) clamp(16px, 3vw, 22px);
   text-align: center;
   cursor: pointer;
+  transform: rotateY(0deg);
+  transition: transform 0.32s ease;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
-.card:active {
+.card.flip-out {
+  transform: rotateY(90deg);
+}
+
+.card.flip-in-start {
+  transition: none;
+  transform: rotateY(-90deg);
+}
+
+.card.flip-in-end {
+  transition: transform 0.32s ease;
+  transform: rotateY(0deg);
+}
+
+.card:active:not(.flip-out):not(.flip-in-end) {
   filter: brightness(0.96);
 }
 

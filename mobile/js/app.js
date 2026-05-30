@@ -42,6 +42,7 @@ const state = {
   comfortData: { version: 1, words: {} },
   cardFrontHtml: "",
   cardBackHtml: "",
+  flipAnimating: false,
 };
 
 function comfortStorageKey(levelId = state.cefrLevel) {
@@ -367,6 +368,26 @@ function updateComfortUI(word) {
   });
 }
 
+function resetCardFlipAnimation() {
+  const card = document.getElementById("flashcard");
+  if (!card) return;
+  card.classList.remove("flip-out", "flip-in-start", "flip-in-end");
+  card.style.transition = "";
+  card.style.transform = "";
+  state.flipAnimating = false;
+}
+
+function waitCardTransition(card) {
+  return new Promise((resolve) => {
+    const onEnd = (event) => {
+      if (event.target !== card || event.propertyName !== "transform") return;
+      card.removeEventListener("transitionend", onEnd);
+      resolve();
+    };
+    card.addEventListener("transitionend", onEnd);
+  });
+}
+
 function buildCardSides(w) {
   const sectionTag = w.section
     ? `<div class="section-tag">${w.section.replace(/^\d+\.\s*/, "")}</div>`
@@ -407,6 +428,7 @@ function renderCard() {
     return;
   }
   card.classList.remove("hidden");
+  resetCardFlipAnimation();
   state.flipped = false;
 
   const pct = state.deck.length ? ((state.index + 1) / state.deck.length) * 100 : 0;
@@ -430,9 +452,34 @@ function renderCard() {
   }
 }
 
-function flipCard() {
+async function flipCard() {
+  if (state.flipAnimating) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) {
+    state.flipped = !state.flipped;
+    renderCardFace();
+    return;
+  }
+
+  const card = document.getElementById("flashcard");
+  state.flipAnimating = true;
+  card.classList.remove("flip-in-start", "flip-in-end", "flip-out");
+  card.classList.add("flip-out");
+  await waitCardTransition(card);
+
   state.flipped = !state.flipped;
   renderCardFace();
+
+  card.classList.remove("flip-out");
+  card.classList.add("flip-in-start");
+  card.offsetHeight;
+  card.classList.remove("flip-in-start");
+  card.classList.add("flip-in-end");
+  await waitCardTransition(card);
+
+  card.classList.remove("flip-in-end");
+  state.flipAnimating = false;
 }
 
 function nextCard() {
