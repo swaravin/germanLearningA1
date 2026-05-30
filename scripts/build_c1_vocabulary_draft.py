@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate data/drafts/c1_vocabulary_exhaustive.csv for Goethe C1 exam prep (content only)."""
+"""Generate data/drafts/c1_vocabulary_exhaustive.csv for C1 exam prep (content only)."""
 
 from __future__ import annotations
 
@@ -897,7 +897,7 @@ ENTRIES: list[tuple[str, str, str]] = [
     ("30. C1-Abstrakta", "die Veränderung", "change"),
     ("30. C1-Abstrakta", "die Transformation", "transformation"),
     ("30. C1-Abstrakta", "die Modernisierung", "modernization"),
-    # ── 31. Schreiben — Forum (Goethe Teil 1) ──
+    # ── 31. Schreiben — Forum (Teil 1) ──
     ("31. Schreiben — Forum", "Ich möchte mich an dieser Diskussion beteiligen, weil", "I would like to join this discussion because"),
     ("31. Schreiben — Forum", "Aus meiner Sicht ist es wichtig, dass", "From my point of view it is important that"),
     ("31. Schreiben — Forum", "Ich schließe mich der Meinung an, dass", "I agree with the view that"),
@@ -918,7 +918,7 @@ ENTRIES: list[tuple[str, str, str]] = [
     ("31. Schreiben — Forum", "sachlich argumentieren", "to argue objectively"),
     ("31. Schreiben — Forum", "zur Sprache bringen", "to raise (a topic)"),
     ("31. Schreiben — Forum", "Stellung beziehen", "to take a position"),
-    # ── 32. Schreiben — Formelle E-Mail (Goethe Teil 2) ──
+    # ── 32. Schreiben — Formelle E-Mail (Teil 2) ──
     ("32. Schreiben — E-Mail", "Sehr geehrte Frau …,", "Dear Ms … (formal)"),
     ("32. Schreiben — E-Mail", "Sehr geehrter Herr …,", "Dear Mr … (formal)"),
     ("32. Schreiben — E-Mail", "Sehr geehrte Damen und Herren,", "Dear Sir or Madam,"),
@@ -1033,7 +1033,7 @@ ENTRIES: list[tuple[str, str, str]] = [
     ("34. Kollokationen", "in Kraft treten", "to come into force"),
     ("34. Kollokationen", "in Anspruch nehmen", "to make use of / claim"),
     ("34. Kollokationen", "zur Anwendung kommen", "to be applied"),
-    # ── 35. Präsentation (Goethe Sprechen Teil 1) ──
+    # ── 35. Präsentation (Sprechen Teil 1) ──
     ("35. Präsentation", "Guten Tag, mein Name ist … und ich möchte heute über … sprechen", "Good day, my name is … and today I would like to talk about …"),
     ("35. Präsentation", "Das Thema meines Vortrags lautet", "The topic of my presentation is"),
     ("35. Präsentation", "Ich habe mich für dieses Thema entschieden, weil", "I chose this topic because"),

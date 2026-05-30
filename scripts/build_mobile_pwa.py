@@ -18,6 +18,8 @@ from a1.levels import LEVELS_MANIFEST, all_levels, custom_vocabulary_path, ensur
 
 
 def _write_sw_cache(level_ids: list[str]) -> None:
+    import re
+
     assets = [
         "./",
         "./index.html",
@@ -31,7 +33,8 @@ def _write_sw_cache(level_ids: list[str]) -> None:
         assets.append(f"./data/levels/{lid}/custom_vocabulary.json")
     sw_path = ROOT / "mobile" / "sw.js"
     text = sw_path.read_text(encoding="utf-8")
-    cache_line = 'const CACHE = "de-learn-v9";'
+    match = re.search(r'const CACHE = "(de-learn-v\d+)";', text)
+    cache_line = f'const CACHE = "{match.group(1)}";' if match else 'const CACHE = "de-learn-v11";'
     if 'const CACHE = "' not in text:
         raise RuntimeError("sw.js CACHE line not found")
     text = text.split('const CACHE = "')[0] + cache_line + "\n"

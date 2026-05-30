@@ -394,6 +394,75 @@ header p {
   background: var(--sentence-bg);
 }
 
+.comfort-prioritize {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.comfort-prioritize input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.empty-deck-hint {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--hint-text);
+  background: var(--hint-bg);
+  border: 1px solid var(--border);
+}
+
+.comfort-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.comfort-label {
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.comfort-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.comfort-btn {
+  padding: 10px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-border);
+  font-size: clamp(0.72rem, 3vw, 0.82rem);
+  font-weight: 600;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  min-height: 44px;
+}
+
+.comfort-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.comfort-btn:active {
+  transform: scale(0.97);
+}
+
 .hidden {
   display: none !important;
 }

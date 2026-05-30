@@ -50,7 +50,7 @@ DEFAULT_LEVELS: tuple[CEFRLevel, ...] = (
         id="c1",
         label="C1",
         title="German C1",
-        subtitle="Advanced — Goethe",
+        subtitle="Advanced",
         features=("images", "custom_cards", "comfort"),
     ),
 )

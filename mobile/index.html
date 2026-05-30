@@ -38,7 +38,15 @@
             <option value="english">English front</option>
             <option value="both">German + English</option>
           </select>
+          <select id="comfort-filter" aria-label="Practice by comfort"></select>
         </div>
+
+        <label class="comfort-prioritize" for="comfort-weighted">
+          <input type="checkbox" id="comfort-weighted" checked />
+          Prioritize words I know less
+        </label>
+
+        <div id="empty-deck-hint" class="empty-deck-hint hidden" role="status"></div>
 
         <div class="progress-wrap">
           <div class="progress-bar" aria-hidden="true">
@@ -57,6 +65,17 @@
           </div>
 
           <div id="card-sentence"></div>
+
+          <div class="comfort-panel" id="comfort-panel">
+            <div class="comfort-label" id="comfort-label">Comfort: Not rated yet</div>
+            <div class="comfort-buttons" id="comfort-buttons">
+              <button type="button" class="comfort-btn" data-level="1">😓 1</button>
+              <button type="button" class="comfort-btn" data-level="2">2</button>
+              <button type="button" class="comfort-btn" data-level="3">3 OK</button>
+              <button type="button" class="comfort-btn" data-level="4">4</button>
+              <button type="button" class="comfort-btn" data-level="5">😊 5</button>
+            </div>
+          </div>
         </div>
 
         <div class="actions actions-nav">
