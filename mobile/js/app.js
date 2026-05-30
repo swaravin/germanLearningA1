@@ -40,6 +40,8 @@ const state = {
   comfortFilter: "all",
   comfortWeighted: true,
   comfortData: { version: 1, words: {} },
+  cardFrontHtml: "",
+  cardBackHtml: "",
 };
 
 function comfortStorageKey(levelId = state.cefrLevel) {
@@ -365,14 +367,33 @@ function updateComfortUI(word) {
   });
 }
 
-function syncFlipFaces() {
-  const frontEl = document.getElementById("card-front");
-  const backEl = document.getElementById("card-back");
-  if (!frontEl || !backEl) return;
-  frontEl.classList.toggle("face-visible", !state.flipped);
-  frontEl.classList.toggle("face-hidden", state.flipped);
-  backEl.classList.toggle("face-visible", state.flipped);
-  backEl.classList.toggle("face-hidden", !state.flipped);
+function buildCardSides(w) {
+  const sectionTag = w.section
+    ? `<div class="section-tag">${w.section.replace(/^\d+\.\s*/, "")}</div>`
+    : "";
+
+  if (state.front === "english") {
+    return {
+      front: `${sectionTag}<div class="english">${englishShort(w.english)}</div>`,
+      back: `<div class="german">${germanDisplay(w)}</div>`,
+    };
+  }
+  if (state.front === "both") {
+    return {
+      front: `${sectionTag}<div class="german">${germanDisplay(w)}</div><div class="english">${englishShort(w.english)}</div>`,
+      back: `<div class="sentence">${w.sentence_de || ""}</div><div class="sentence">${w.sentence_en || ""}</div>`,
+    };
+  }
+  return {
+    front: `${sectionTag}<div class="german">${germanDisplay(w)}</div>`,
+    back: `<div class="english">${englishShort(w.english)}</div>`,
+  };
+}
+
+function renderCardFace() {
+  const faceEl = document.getElementById("card-face");
+  if (!faceEl) return;
+  faceEl.innerHTML = state.flipped ? state.cardBackHtml : state.cardFrontHtml;
 }
 
 function renderCard() {
@@ -394,22 +415,10 @@ function renderCard() {
   document.getElementById("progress").textContent =
     `${meta.label} · Card ${state.index + 1} / ${state.deck.length} · ${w.section || ""}`;
 
-  const frontEl = document.getElementById("card-front");
-  const backEl = document.getElementById("card-back");
-  const sectionTag = w.section
-    ? `<div class="section-tag">${w.section.replace(/^\d+\.\s*/, "")}</div>`
-    : "";
-
-  if (state.front === "english") {
-    frontEl.innerHTML = `${sectionTag}<div class="english">${englishShort(w.english)}</div>`;
-    backEl.innerHTML = `<div class="german">${germanDisplay(w)}</div>`;
-  } else if (state.front === "both") {
-    frontEl.innerHTML = `${sectionTag}<div class="german">${germanDisplay(w)}</div><div class="english">${englishShort(w.english)}</div>`;
-    backEl.innerHTML = `<div class="sentence">${w.sentence_de || ""}</div><div class="sentence">${w.sentence_en || ""}</div>`;
-  } else {
-    frontEl.innerHTML = `${sectionTag}<div class="german">${germanDisplay(w)}</div>`;
-    backEl.innerHTML = `<div class="english">${englishShort(w.english)}</div>`;
-  }
+  const sides = buildCardSides(w);
+  state.cardFrontHtml = sides.front;
+  state.cardBackHtml = sides.back;
+  renderCardFace();
 
   const sent = document.getElementById("card-sentence");
   if (state.front !== "both") {
@@ -419,13 +428,11 @@ function renderCard() {
   } else {
     sent.innerHTML = "";
   }
-
-  syncFlipFaces();
 }
 
 function flipCard() {
   state.flipped = !state.flipped;
-  syncFlipFaces();
+  renderCardFace();
 }
 
 function nextCard() {

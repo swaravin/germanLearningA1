@@ -223,43 +223,25 @@ header p {
   width: 100%;
   min-height: clamp(200px, 38dvh, 320px);
   border-radius: var(--radius);
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-  text-align: center;
-  cursor: pointer;
-}
-
-.card-face {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius);
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: clamp(18px, 4vw, 28px) clamp(16px, 3.5vw, 22px) clamp(16px, 3vw, 22px);
+  text-align: center;
+  cursor: pointer;
+}
+
+.card:active {
+  filter: brightness(0.96);
+}
+
+.card-face {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: clamp(140px, 28dvh, 200px);
   width: 100%;
-  transition: opacity 0.2s ease;
-}
-
-.card-face.face-hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.card-face.face-visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-.card:active .card-face.face-visible {
-  filter: brightness(0.96);
 }
 
 .card-hint {

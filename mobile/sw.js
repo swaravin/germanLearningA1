@@ -1,4 +1,4 @@
-const CACHE = "de-learn-v14";
+const CACHE = "de-learn-v15";
 const ASSETS = [
   "./",
   "./index.html",
