@@ -26,6 +26,8 @@ from a1.full_course import (
 )
 from a1.images import ensure_image, image_path, placeholder_svg
 from a1.listen_ui import handle_load_image_query, render_listen_toolbar
+from a1.lid_ui import render_lid_test
+from a1.lid import QUESTIONS_JSON, load_questions
 from a1.articles import (
     article_for_german,
     default_example_sentences,
@@ -38,7 +40,6 @@ from a1.comfort import (
     COMFORT_LABELS,
     COMFORT_FILTERS,
     comfort_filter_label,
-    comfort_revision,
     comfort_stats,
     count_by_comfort_filter,
     effective_level,
@@ -181,6 +182,55 @@ st.markdown(
         color: #0f3d2e !important;
     }
 
+    /* Settings — export / import controls in sidebar */
+    [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button {
+        background: #ffffff !important;
+        color: #0f3d2e !important;
+        border: 1.5px solid #0f3d2e !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        min-height: 42px !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button p,
+    [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button span,
+    [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button * {
+        color: #0f3d2e !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
+        background: #e8f0ec !important;
+        border-color: #1a5c45 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] section[data-testid="stFileUploaderDropzone"] {
+        background: #ffffff !important;
+        border: 1.5px dashed #c5d5ce !important;
+        border-radius: 10px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+        background: #f4f8f6 !important;
+        color: #0f3d2e !important;
+        border: 1.5px solid #0f3d2e !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] button p,
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] button span,
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] button * {
+        color: #0f3d2e !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] small {
+        color: #64748b !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        background: #ffffff !important;
+        color: #0f3d2e !important;
+        border: 1px solid #c5d5ce !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stExpander"] summary * {
+        color: #0f3d2e !important;
+    }
+
     /* Flashcard ◀ Prev / Flip / Next ▶ — inside bordered card shell */
     .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
     [data-testid="stButton"] button {
@@ -263,6 +313,58 @@ st.markdown(
         [data-testid="stSidebar"] div[data-testid="stButton"] button p,
         [data-testid="stSidebar"] div[data-testid="stButton"] button span {
             color: #e2e8f0 !important;
+        }
+        /* Settings — export / import (override sidebar * { color } on white widgets) */
+        [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button {
+            background: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1.5px solid #7eb8e8 !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            min-height: 42px !important;
+        }
+        [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button p,
+        [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button span,
+        [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button * {
+            color: #ffffff !important;
+        }
+        [data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
+            background: #25466d !important;
+            border-color: #9ccbf0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] section[data-testid="stFileUploaderDropzone"] {
+            background: #1e293b !important;
+            border: 1.5px dashed #475569 !important;
+            border-radius: 10px !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+            background: #243044 !important;
+            color: #e2e8f0 !important;
+            border: 1.5px solid #7eb8e8 !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button p,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button span,
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] button * {
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stFileUploader"] small {
+            color: #94a3b8 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary {
+            background: #243044 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary * {
+            color: #e2e8f0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stWidgetLabel"] p,
+        [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stCaption"] {
+            color: #94a3b8 !important;
         }
         /* Flashcard nav — accent buttons, readable on dark card */
         .stApp div[data-testid="stVerticalBlockBorderWrapper"]:has(.flash-card-marker)
@@ -458,7 +560,6 @@ def _deck_filter_key(
         cefr_level,
         vocab_rev,
         normalize_comfort_filter(st.session_state.get(_comfort_practice_key(), "all")),
-        comfort_revision(cefr_level),
         bool(st.session_state.get("comfort_weighted", True)),
         _deck_fingerprint(deck),
     )
@@ -607,11 +708,17 @@ def init_state(deck: list[Word], *, vocab_rev: tuple[float, float], cefr_level: 
         or not _deck_matches_filter(session_deck, deck)
     )
     if needs_rebuild:
+        keep_id: int | None = None
+        if session_deck:
+            keep_id = session_deck[st.session_state.get("card_i", 0) % len(session_deck)].id
         st.session_state.deck = _build_deck_from_filtered(deck, cefr_level)
         st.session_state.deck_filter_key = key
-        st.session_state.card_i = 0
-        st.session_state.flipped = False
-        st.session_state.card_history = []
+        if keep_id is not None and any(w.id == keep_id for w in st.session_state.deck):
+            st.session_state.card_i = index_of_word(st.session_state.deck, keep_id)
+        else:
+            st.session_state.card_i = 0
+            st.session_state.flipped = False
+            st.session_state.card_history = []
     elif st.session_state.deck:
         st.session_state.card_i = st.session_state.card_i % len(st.session_state.deck)
     if "card_history" not in st.session_state:
@@ -1004,12 +1111,18 @@ def sidebar(all_words: list[Word]) -> tuple[list[Word], CEFRLevel]:
     st.sidebar.caption(f"{len(all_words)} words · {len(load_custom_vocabulary(_cefr()))} custom")
 
     modes = ["Flashcards", "Browse list", "Add card", "Manage cards"]
+    if QUESTIONS_JSON.exists():
+        modes.append("Leben in Deutschland test")
     if meta.has_feature("mp3_courses"):
         modes.append("Listen — full courses")
     mode_default = st.session_state.get("mode", "Flashcards")
     mode_index = modes.index(mode_default) if mode_default in modes else 0
     mode = st.sidebar.radio("Mode", modes, index=mode_index)
     st.session_state.mode = mode
+
+    if mode == "Leben in Deutschland test":
+        render_settings_sidebar()
+        return all_words, meta
 
     sec_list = ["All sections"] + sections(all_words)
     if load_custom_vocabulary(_cefr()) and CUSTOM_SECTION not in sec_list:
@@ -1056,7 +1169,6 @@ def sidebar(all_words: list[Word]) -> tuple[list[Word], CEFRLevel]:
             st.session_state.comfort_weighted = True
         st.sidebar.checkbox(
             "Prioritize words I know less",
-            value=st.session_state.get("comfort_weighted", True),
             key="comfort_weighted",
             help=(
                 "When on, words you rated 1–2 (or not yet rated) appear more often; "
@@ -1430,6 +1542,7 @@ def render_comfort_controls(word: Word) -> None:
             btn_type = "primary" if saved == level else "secondary"
             if st.button(text, key=f"comfort_{word.id}_{level}", type=btn_type, use_container_width=True):
                 set_comfort_level(word.id, level, _cefr())
+                st.session_state.focus_word_id = word.id
                 st.rerun()
 
 
@@ -2009,6 +2122,8 @@ def main() -> None:
     elif mode == "Manage cards":
         st.title(f"🇩🇪 {meta.title}")
         render_manage_cards(all_words)
+    elif mode == "Leben in Deutschland test":
+        render_lid_test()
     else:
         st.title(f"🇩🇪 {meta.title}")
         render_browse(all_words)

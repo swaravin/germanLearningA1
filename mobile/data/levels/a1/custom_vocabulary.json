@@ -28,11 +28,11 @@
       "id": 453,
       "section": "My cards",
       "german": "weg",
-      "english": "away",
+      "english": "route",
       "pronunciation": "der weg",
       "sentence_de": "Das ist der weg. Ich brauche den weg.",
       "sentence_en": "This is away. I need away.",
-      "image_query": "away",
+      "image_query": "route",
       "has_image": true,
       "article": "der"
     },
@@ -115,6 +115,194 @@
       "image_query": "persons",
       "has_image": true,
       "article": "die"
+    },
+    {
+      "id": 461,
+      "section": "10. Food & Drinks",
+      "german": "Zun Wöhl!",
+      "english": "Cheers",
+      "pronunciation": "Zun Wöhl!",
+      "sentence_de": "Das ist Zun Wöhl!. Ich brauche Zun Wöhl!.",
+      "sentence_en": "This is Cheers. I need Cheers.",
+      "image_query": "Zun",
+      "has_image": true
+    },
+    {
+      "id": 462,
+      "section": "My cards",
+      "german": "Mahlzeit",
+      "english": "meal",
+      "pronunciation": "Mahlzeit",
+      "sentence_de": "Mahlzeit!",
+      "sentence_en": "Enjoy your meal!",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 463,
+      "section": "My cards",
+      "german": "Satt",
+      "english": "Full",
+      "pronunciation": "Satt",
+      "sentence_de": "Das ist Satt. Ich brauche Satt.",
+      "sentence_en": "This is Full. I need Full.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 464,
+      "section": "My cards",
+      "german": "UmFrage",
+      "english": "Survey",
+      "pronunciation": "UmFrage",
+      "sentence_de": "Das ist UmFrage. Ich brauche UmFrage.",
+      "sentence_en": "This is Survey. I need Survey.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 465,
+      "section": "My cards",
+      "german": "vormittag",
+      "english": "Late morning",
+      "pronunciation": "vormittag",
+      "sentence_de": "„vormittag“ — auf Englisch: Late morning.",
+      "sentence_en": "\"vormittag\" — in English: Late morning.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 466,
+      "section": "My cards",
+      "german": "Lügner",
+      "english": "liar",
+      "pronunciation": "der Lügner",
+      "sentence_de": "Das ist der Lügner. Ich brauche den Lügner.",
+      "sentence_en": "This is liar. I need liar.",
+      "image_query": "",
+      "has_image": false,
+      "article": "der"
+    },
+    {
+      "id": 541,
+      "section": "My cards",
+      "german": "Geduld",
+      "english": "Patience",
+      "pronunciation": "Geduld",
+      "sentence_de": "Das ist Geduld. Ich brauche Geduld.",
+      "sentence_en": "This is Patience. I need Patience.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 542,
+      "section": "My cards",
+      "german": "Luft",
+      "english": "Air",
+      "pronunciation": "Luft",
+      "sentence_de": "Das ist Luft. Ich brauche Luft.",
+      "sentence_en": "This is Air. I need Air.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 543,
+      "section": "My cards",
+      "german": "gericht",
+      "english": "dish",
+      "pronunciation": "gericht",
+      "sentence_de": "„gericht“ — auf Englisch: dish.",
+      "sentence_en": "\"gericht\" — in English: dish.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 547,
+      "section": "My cards",
+      "german": "wäscht",
+      "english": "washes",
+      "pronunciation": "wäscht",
+      "sentence_de": "„wäscht“ — auf Englisch: washes.",
+      "sentence_en": "\"wäscht\" — in English: washes.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 548,
+      "section": "My cards",
+      "german": "schält",
+      "english": "peels",
+      "pronunciation": "schält",
+      "sentence_de": "„schält“ — auf Englisch: peels.",
+      "sentence_en": "\"schält\" — in English: peels.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 549,
+      "section": "My cards",
+      "german": "schneidet",
+      "english": "cuts",
+      "pronunciation": "schneidet",
+      "sentence_de": "„schneidet“ — auf Englisch: cuts.",
+      "sentence_en": "\"schneidet\" — in English: cuts.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 550,
+      "section": "My cards",
+      "german": "Spaß",
+      "english": "fun",
+      "pronunciation": "Spaß",
+      "sentence_de": "Das ist Spaß. Ich brauche Spaß.",
+      "sentence_en": "This is fun. I need fun.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 551,
+      "section": "My cards",
+      "german": "kürzen",
+      "english": "shortening",
+      "pronunciation": "kürzen",
+      "sentence_de": "Ich kürze meine Fingernägel.",
+      "sentence_en": "I shorten my fingernails.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 552,
+      "section": "My cards",
+      "german": "schneiden",
+      "english": "cut",
+      "pronunciation": "schneiden",
+      "sentence_de": "Bitte schneiden Sie meine Haare",
+      "sentence_en": "Please cut my hairs",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 553,
+      "section": "My cards",
+      "german": "Viertel",
+      "english": "quarter",
+      "pronunciation": "Viertel",
+      "sentence_de": "Das ist Viertel. Ich brauche Viertel.",
+      "sentence_en": "This is quarter. I need quarter.",
+      "image_query": "",
+      "has_image": false
+    },
+    {
+      "id": 554,
+      "section": "My cards",
+      "german": "Spaziergang",
+      "english": "stroll",
+      "pronunciation": "Spaziergang",
+      "sentence_de": "Das ist Spaziergang. Ich brauche Spaziergang.",
+      "sentence_en": "This is stroll. I need stroll.",
+      "image_query": "",
+      "has_image": false
     }
   ]
 }

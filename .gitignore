@@ -10,6 +10,9 @@ assets/audio/*
 assets/full/.course_cache/
 data/word_comfort.json
 data/levels/*/word_comfort.json
+data/lid/progress.json
+data/lid_questions_source.json
+mobile/data/levels/lid/scraper_source.json
 .DS_Store
 *.aiff
 *.m4a

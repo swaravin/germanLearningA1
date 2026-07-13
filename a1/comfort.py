@@ -69,24 +69,36 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+_RAW_CACHE: dict[str, dict] = {}
+
+
 def _load_raw(level_id: str | None = None) -> dict:
-    path = comfort_path(normalize_level_id(level_id))
+    key = normalize_level_id(level_id)
+    cached = _RAW_CACHE.get(key)
+    if cached is not None:
+        return cached
+
+    path = comfort_path(key)
     if not path.exists():
-        return {"version": 1, "words": {}}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return {"version": 1, "words": {}}
-    if not isinstance(data, dict):
-        return {"version": 1, "words": {}}
-    data.setdefault("words", {})
+        data: dict = {"version": 1, "words": {}}
+    else:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            data = {"version": 1, "words": {}}
+        if not isinstance(data, dict):
+            data = {"version": 1, "words": {}}
+        data.setdefault("words", {})
+    _RAW_CACHE[key] = data
     return data
 
 
 def _save_raw(data: dict, level_id: str | None = None) -> None:
-    path = comfort_path(normalize_level_id(level_id))
+    key = normalize_level_id(level_id)
+    path = comfort_path(key)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _RAW_CACHE[key] = data
 
 
 def get_level(word_id: int, cefr_level: str | None = None) -> int | None:
@@ -191,17 +203,28 @@ def comfort_stats(words: list[Word], cefr_level: str | None = None) -> ComfortSt
     )
 
 
+def _weight_map(words: list[Word], cefr_level: str | None = None) -> dict[int, int]:
+    """Comfort weights for a word list — one disk read per level."""
+    words_dict = _load_raw(cefr_level)["words"]
+    out: dict[int, int] = {}
+    for w in words:
+        entry = words_dict.get(str(w.id))
+        if not entry:
+            level = MIN_LEVEL
+        else:
+            level = max(MIN_LEVEL, min(MAX_LEVEL, int(entry.get("level", DEFAULT_LEVEL))))
+        out[w.id] = weight_for_level(level)
+    return out
+
+
 def weighted_shuffle_deck(words: list[Word], cefr_level: str | None = None) -> list[Word]:
     if len(words) <= 1:
         return list(words)
-    remaining = list(words)
-    ordered: list[Word] = []
-    while remaining:
-        weights = [weight_for_word(w.id, cefr_level) for w in remaining]
-        pick = random.choices(remaining, weights=weights, k=1)[0]
-        ordered.append(pick)
-        remaining.remove(pick)
-    return ordered
+    weights = _weight_map(words, cefr_level)
+    # Efraimidis–Spirakis weighted permutation (O(n log n), single comfort load).
+    scored = [(random.random() ** (1.0 / weights[w.id]), w) for w in words]
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [w for _, w in scored]
 
 
 def filter_words_by_comfort(

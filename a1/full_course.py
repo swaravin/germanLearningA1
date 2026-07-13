@@ -14,6 +14,7 @@ from a1.audio import (
     get_word_audio_path,
     user_recorded_clip,
 )
+from a1.config import FULL_AUDIO_DIR, PAUSE_AFTER_WORD_SEC, PAUSE_DE_BEFORE_EN_SEC
 from a1.levels import custom_vocabulary_path, vocabulary_path
 from a1.vocab import Word, load_all_vocabulary, load_custom_vocabulary, vocabulary_revision
 

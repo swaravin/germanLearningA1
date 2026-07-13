@@ -14,6 +14,19 @@ const ASSETS = [
   "./data/levels/c1/custom_vocabulary.json",
 ];
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 function isNetworkFirst(url) {
   const path = url.pathname;
   return (
